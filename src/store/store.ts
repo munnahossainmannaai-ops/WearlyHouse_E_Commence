@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Address, CartItem, Order, OrderItem, OrderStatus, Product, Review, Toast, User } from "../lib/types";
+import type { Address, CartItem, Order, OrderItem, OrderStatus, Product, Promo, RestockRequest, Review, Toast, User } from "../lib/types";
 import { PRODUCTS, seedReviews } from "../data/catalog";
 import { hashPass, uid } from "../lib/utils";
 
@@ -41,6 +41,18 @@ interface Store {
   recentlyViewed: string[];
   recordView: (productId: string) => void;
   reorder: (items: OrderItem[]) => void;
+
+  views: Record<string, number>;
+  freeShipThreshold: number;
+  setFreeShipThreshold: (n: number) => void;
+  lowStockThreshold: number;
+  setLowStockThreshold: (n: number) => void;
+  promos: Promo[];
+  addPromo: (code: string, pct: number) => string | null;
+  removePromo: (code: string) => void;
+  togglePromo: (code: string) => void;
+  restockRequests: RestockRequest[];
+  requestRestock: (productId: string, email: string) => void;
 
   placeOrder: (o: {
     address: Address;
@@ -161,8 +173,18 @@ export const useStore = create<Store>()(
       toasts: [],
       cartOpen: false,
       recentlyViewed: [],
+      views: Object.fromEntries(PRODUCTS.map((p, i) => [p.id, 340 + p.ratingCount * 9 + i * 53])),
+      freeShipThreshold: 150,
+      lowStockThreshold: 5,
+      promos: [
+        { code: "NEON10", pct: 10, active: true },
+        { code: "WEARLY25", pct: 25, active: true },
+      ],
+      restockRequests: [],
 
       setCartOpen: (v) => set({ cartOpen: v }),
+      setFreeShipThreshold: (n) => set({ freeShipThreshold: Math.max(0, n) }),
+      setLowStockThreshold: (n) => set({ lowStockThreshold: Math.min(30, Math.max(1, n)) }),
 
       toast: (kind, title, message) => {
         const id = uid();
@@ -306,6 +328,7 @@ export const useStore = create<Store>()(
       recordView: (productId) =>
         set((s) => ({
           recentlyViewed: [productId, ...s.recentlyViewed.filter((id) => id !== productId)].slice(0, 8),
+          views: { ...s.views, [productId]: (s.views[productId] ?? 0) + 1 },
         })),
       reorder: (items) => {
         const products = get().products;
@@ -323,6 +346,32 @@ export const useStore = create<Store>()(
           return { cart, cartOpen: added > 0 };
         });
         get().toast(added ? "success" : "info", added ? "Manifest reloaded" : "Nothing to reload", added ? `${added} unit${added > 1 ? "s" : ""} back in cargo.` : "Those units are offline.");
+      },
+
+      addPromo: (code, pct) => {
+        const c = code.trim().toUpperCase();
+        if (!/^[A-Z0-9]{3,12}$/.test(c)) return "Code must be 3–12 letters/digits.";
+        if (get().promos.some((p) => p.code === c)) return "That code is already deployed.";
+        if (!(pct >= 1 && pct <= 90)) return "Discount must be between 1 and 90%.";
+        set((s) => ({ promos: [...s.promos, { code: c, pct, active: true }] }));
+        get().toast("success", `Code ${c} deployed`, `-${pct}% at checkout.`);
+        return null;
+      },
+      removePromo: (code) => {
+        set((s) => ({ promos: s.promos.filter((p) => p.code !== code) }));
+        get().toast("info", `Code ${code} revoked`);
+      },
+      togglePromo: (code) =>
+        set((s) => ({ promos: s.promos.map((p) => (p.code === code ? { ...p, active: !p.active } : p)) })),
+      requestRestock: (productId, email) => {
+        const e = email.trim().toLowerCase();
+        if (get().restockRequests.some((r) => r.productId === productId && r.email === e)) {
+          get().toast("info", "Already in the queue", "We'll ping you the moment it lands.");
+          return;
+        }
+        set((s) => ({ restockRequests: [...s.restockRequests, { id: uid(), productId, email: e, at: Date.now() }] }));
+        const p = get().products.find((x) => x.id === productId);
+        get().toast("success", "Restock ping queued", `We'll signal ${e} when ${p?.name ?? "it"} is back.`);
       },
 
       placeOrder: ({ address, shippingMethod, shippingCost, discount, last4 }) => {

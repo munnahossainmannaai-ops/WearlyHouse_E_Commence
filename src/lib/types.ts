@@ -108,3 +108,16 @@ export type Category = {
   name: string;
   blurb: string;
 };
+
+export interface Promo {
+  code: string;
+  pct: number;
+  active: boolean;
+}
+
+export interface RestockRequest {
+  id: string;
+  productId: string;
+  email: string;
+  at: number;
+}
