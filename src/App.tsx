@@ -7,10 +7,10 @@ import CartDrawer from "./components/CartDrawer";
 import CommandPalette from "./components/CommandPalette";
 import { useStore } from "./store/store";
 import { ToastHost, NeonButton } from "./components/ui";
-import { IconArrow } from "./components/icons";
-import Home from "./pages/Home";
-import Catalog from "./pages/Catalog";
-import ProductPage from "./pages/Product";
+import { IconArrow, IconLogo } from "./components/icons";
+const Home = lazy(() => import("./pages/Home"));
+const Catalog = lazy(() => import("./pages/Catalog"));
+const ProductPage = lazy(() => import("./pages/Product"));
 import CartPage from "./pages/Cart";
 import Auth from "./pages/Auth";
 import Account from "./pages/Account";
@@ -20,6 +20,33 @@ import Wishlist from "./pages/Wishlist";
 const Checkout = lazy(() => import("./pages/Checkout"));
 const Track = lazy(() => import("./pages/Track"));
 const Admin = lazy(() => import("./pages/Admin"));
+
+const TITLES: Record<string, string> = {
+  "/": "Wearly House — Wear the Near Future",
+  "/shop": "Catalog — Wearly House",
+  "/cart": "Cargo Hold — Wearly House",
+  "/checkout": "Secure Checkout — Wearly House",
+  "/auth": "Clearance — Wearly House",
+  "/account": "Operator Dashboard — Wearly House",
+  "/wishlist": "Wishlist — Wearly House",
+  "/track": "Track a Drop — Wearly House",
+  "/admin": "Mission Control — Wearly House",
+};
+
+function PageLoader() {
+  return (
+    <div className="min-h-[60vh] flex flex-col items-center justify-center gap-5">
+      <motion.span
+        animate={{ rotate: 360, scale: [1, 1.06, 1] }}
+        transition={{ rotate: { repeat: Infinity, duration: 1.8, ease: "linear" }, scale: { repeat: Infinity, duration: 1.8, ease: "easeInOut" } }}
+        className="block"
+      >
+        <IconLogo size={42} />
+      </motion.span>
+      <p className="font-mono text-[10px] tracking-[0.35em] uppercase text-mist">establishing uplink…</p>
+    </div>
+  );
+}
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -111,6 +138,11 @@ function Shell() {
     return () => clearTimeout(t);
   }, [theme]);
 
+  useEffect(() => {
+    const t = TITLES[pathname];
+    if (t) document.title = t;
+  }, [pathname]);
+
   return (
     <div className="min-h-screen flex flex-col relative">
       {/* ambient background */}
@@ -124,8 +156,11 @@ function Shell() {
       <ScrollProgress />
 
       <ScrollToTop />
+      <button onClick={() => document.getElementById("main")?.focus()} className="skip-link">
+        Skip to content
+      </button>
       <Navbar />
-      <main className="flex-1">
+      <main id="main" tabIndex={-1} className="flex-1 outline-none">
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={pathname}
@@ -134,7 +169,7 @@ function Shell() {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
           >
-            <Suspense fallback={null}>
+            <Suspense fallback={<PageLoader />}>
             <Routes location={location}>
               <Route path="/" element={<Home />} />
               <Route path="/shop" element={<Catalog />} />

@@ -30,6 +30,9 @@ export default function ProductPage() {
   useEffect(() => {
     if (product) recordView(product.id);
   }, [product?.id]);
+  useEffect(() => {
+    document.title = product ? `${product.name} — Wearly House` : "Unit not found — Wearly House";
+  }, [product?.id]);
 
   const endOfDay = new Date();
   endOfDay.setUTCHours(23, 59, 59, 999);

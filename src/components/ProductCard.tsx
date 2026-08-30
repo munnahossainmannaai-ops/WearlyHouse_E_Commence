@@ -4,6 +4,7 @@ import type { Product } from "../lib/types";
 import { useStore } from "../store/store";
 import { cx, fmt } from "../lib/utils";
 import { Stars, Tag } from "./ui";
+import SmartImage from "./SmartImage";
 import { IconCart, IconHeart } from "./icons";
 
 export default function ProductCard({ product, layout = "grid", index = 0 }: { product: Product; layout?: "grid" | "list"; index?: number }) {
@@ -61,7 +62,7 @@ export default function ProductCard({ product, layout = "grid", index = 0 }: { p
       >
         <Link to={`/product/${product.slug}`} className="group glass glow-hover rounded-xl overflow-hidden flex flex-col sm:flex-row">
           <div className="relative sm:w-56 aspect-square sm:aspect-auto shrink-0 overflow-hidden">
-            <img src={product.image} alt={product.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+            <SmartImage src={product.image} alt={product.name} eager={index < 3} className="absolute inset-0 transition-transform duration-700 group-hover:scale-110" />
             {product.tags[0] && (
               <span className="absolute top-3 left-3">
                 <Tag tone={product.tags[0] === "Limited" ? "amber" : product.tags[0] === "New" ? "mint" : "viol"}>{product.tags[0]}</Tag>
@@ -99,11 +100,11 @@ export default function ProductCard({ product, layout = "grid", index = 0 }: { p
     >
       <Link to={`/product/${product.slug}`} className="group block glass glow-hover rounded-xl overflow-hidden h-full">
         <div className="relative aspect-square overflow-hidden">
-          <img
+          <SmartImage
             src={product.image}
             alt={product.name}
-            loading="lazy"
-            className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.08]"
+            eager={index < 4}
+            className="w-full h-full transition-transform duration-700 ease-out group-hover:scale-[1.08]"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-void/70 via-transparent to-transparent opacity-60" />
           <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start">
