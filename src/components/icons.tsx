@@ -187,6 +187,13 @@ export const IconChart = (p: P) => (
   </svg>
 );
 
+export const IconDownload = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M12 3.5v11M7.5 10 12 14.5 16.5 10" />
+    <path d="M4.5 17.5v1.7A1.8 1.8 0 0 0 6.3 21h11.4a1.8 1.8 0 0 0 1.8-1.8v-1.7" />
+  </svg>
+);
+
 export const IconUsers = (p: P) => (
   <svg {...base(p)}>
     <circle cx="9" cy="8.5" r="3" />
