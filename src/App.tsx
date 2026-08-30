@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { HashRouter, Routes, Route, useLocation, useNavigate, useParams } from "react-router-dom";
 import { AnimatePresence, MotionConfig, motion, useScroll, useSpring } from "framer-motion";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import CartDrawer from "./components/CartDrawer";
 import CommandPalette from "./components/CommandPalette";
+import { useStore } from "./store/store";
 import { ToastHost, NeonButton } from "./components/ui";
 import { IconArrow } from "./components/icons";
 import Home from "./pages/Home";
@@ -90,6 +91,23 @@ function Shell() {
   const location = useLocation();
   const { pathname } = location;
   const bare = pathname === "/auth";
+  const theme = useStore((s) => s.theme);
+  const firstThemeApply = useRef(true);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === "cleanroom") root.dataset.theme = "cleanroom";
+    else delete root.dataset.theme;
+    root.style.backgroundColor = theme === "cleanroom" ? "#edf0f6" : "#07070d";
+    if (firstThemeApply.current) {
+      firstThemeApply.current = false;
+      return;
+    }
+    root.classList.add("theme-anim");
+    const t = setTimeout(() => root.classList.remove("theme-anim"), 520);
+    return () => clearTimeout(t);
+  }, [theme]);
+
   return (
     <div className="min-h-screen flex flex-col relative">
       {/* ambient background */}

@@ -4,7 +4,11 @@ import type { Address, CartItem, Order, OrderStatus, Product, Review, Toast, Use
 import { PRODUCTS, seedReviews } from "../data/catalog";
 import { hashPass, uid } from "../lib/utils";
 
+export type ThemeName = "void" | "cleanroom";
+
 interface Store {
+  theme: ThemeName;
+  setTheme: (t: ThemeName) => void;
   user: User | null;
   users: User[];
   products: Product[];
@@ -142,6 +146,8 @@ const seedOrders = (): Order[] => {
 export const useStore = create<Store>()(
   persist(
     (set, get) => ({
+      theme: "void",
+      setTheme: (t) => set({ theme: t }),
       user: null,
       users: seedUsers,
       products: PRODUCTS,
@@ -383,6 +389,7 @@ export const useStore = create<Store>()(
     {
       name: "nova-supply-v1",
       partialize: (s) => ({
+        theme: s.theme,
         user: s.user,
         users: s.users,
         products: s.products,

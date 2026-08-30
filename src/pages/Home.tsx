@@ -84,7 +84,7 @@ export default function Home() {
 
             <h1 className="font-display font-bold leading-[0.98] text-white">
               <span className="block text-5xl md:text-7xl xl:text-[5.2rem] tracking-tight">{line1 || "\u00A0"}</span>
-              <span className="block text-5xl md:text-7xl xl:text-[5.2rem] tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-neon via-[#7dd8ff] to-viol text-glow">
+              <span className="block text-5xl md:text-7xl xl:text-[5.2rem] tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-neon via-[#3db8dd] to-viol text-glow">
                 {line2 || "\u00A0"}
               </span>
             </h1>

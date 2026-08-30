@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useStore } from "../store/store";
 import { cx, fmt } from "../lib/utils";
-import { IconArrow, IconBolt, IconBox, IconCart, IconGrid, IconHeart, IconSearch, IconUser } from "./icons";
+import { IconArrow, IconBolt, IconBox, IconCart, IconGrid, IconHeart, IconSearch, IconSpark, IconUser } from "./icons";
 
 interface Cmd {
   id: string;
@@ -22,7 +22,7 @@ export default function CommandPalette() {
   const listRef = useRef<HTMLDivElement>(null);
   const nav = useNavigate();
 
-  const { products, user, addToCart, setCartOpen } = useStore();
+  const { products, user, addToCart, setCartOpen, theme, setTheme } = useStore();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -67,6 +67,22 @@ export default function CommandPalette() {
         ? [{ id: "n-admin", group: "Navigate", label: "Mission control", hint: "admin", icon: <IconBox size={15} />, run: go(() => nav("/admin")) }]
         : []),
       { id: "a-cart", group: "Actions", label: "Open cargo drawer", icon: <IconCart size={15} />, run: go(() => setCartOpen(true)) },
+      {
+        id: "t-void",
+        group: "Protocol",
+        label: "Interface · VOID",
+        hint: theme === "void" ? "active" : "dark ops",
+        icon: <IconSpark size={15} />,
+        run: go(() => setTheme("void")),
+      },
+      {
+        id: "t-clean",
+        group: "Protocol",
+        label: "Interface · CLEANROOM",
+        hint: theme === "cleanroom" ? "active" : "daylight lab",
+        icon: <IconSpark size={15} />,
+        run: go(() => setTheme("cleanroom")),
+      },
     ];
 
     const matchedNavs = t ? navs.filter((n) => (n.label + " " + (n.hint ?? "")).toLowerCase().includes(t)) : navs;
@@ -94,7 +110,7 @@ export default function CommandPalette() {
       ]);
 
     return [...matchedNavs, ...prodCmds];
-  }, [q, products, user]);
+  }, [q, products, user, theme]);
 
   useEffect(() => setIdx(0), [q]);
 

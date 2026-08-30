@@ -1,41 +1,89 @@
 @import "tailwindcss";
 
 @theme {
-  --color-void: #07070d;
-  --color-abyss: #0b0b15;
-  --color-panel: #11111d;
-  --color-neon: #2de2ff;
-  --color-viol: #a06bff;
-  --color-mist: #8f90ac;
-  --color-fog: #c9cbe4;
-  --color-amber2: #ffc65c;
-  --color-rose2: #ff5c8a;
-  --color-mint: #5cffc0;
   --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
+/* ============================================================
+   PROTOCOL PALETTES
+   VOID      — dark ops. near-black hull, ion cyan + violet.
+   CLEANROOM — daylight lab. surgical paper, deep teal + iris.
+   ============================================================ */
+:root {
+  --void: #07070d;
+  --abyss: #0b0b15;
+  --panel: #11111d;
+  --white: #ffffff;
+  --fog: #c9cbe4;
+  --mist: #8f90ac;
+  --neon: #2de2ff;
+  --viol: #a06bff;
+  --mint: #5cffc0;
+  --rose2: #ff5c8a;
+  --amber2: #ffc65c;
+  --chart-grid: rgba(150, 163, 255, 0.08);
+  --neon-60: rgba(45, 226, 255, 0.6);
+  --glass-hi: rgba(255, 255, 255, 0.055);
+  --glass-lo: rgba(255, 255, 255, 0.018);
+  --glass-border: rgba(150, 163, 255, 0.13);
+}
+
+[data-theme="cleanroom"] {
+  --void: #edf0f6;
+  --abyss: #e2e7f0;
+  --panel: #f8fafd;
+  --white: #101523;
+  --fog: #232a3b;
+  --mist: #59627a;
+  --neon: #0890b4;
+  --viol: #7441e8;
+  --mint: #0c9a6d;
+  --rose2: #d62f68;
+  --amber2: #a3720a;
+  --chart-grid: rgba(16, 21, 35, 0.1);
+  --neon-60: rgba(8, 144, 180, 0.4);
+  --glass-hi: rgba(255, 255, 255, 0.8);
+  --glass-lo: rgba(255, 255, 255, 0.52);
+  --glass-border: rgba(16, 21, 35, 0.1);
+}
+
+@theme inline {
+  --color-void: var(--void);
+  --color-abyss: var(--abyss);
+  --color-panel: var(--panel);
+  --color-white: var(--white);
+  --color-fog: var(--fog);
+  --color-mist: var(--mist);
+  --color-neon: var(--neon);
+  --color-viol: var(--viol);
+  --color-mint: var(--mint);
+  --color-rose2: var(--rose2);
+  --color-amber2: var(--amber2);
+}
+
 html {
   scroll-behavior: smooth;
+  background-color: var(--void);
 }
 
 body {
-  background-color: var(--color-void);
-  color: var(--color-fog);
+  background-color: var(--void);
+  color: var(--fog);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
 
 ::selection {
-  background: rgba(45, 226, 255, 0.28);
-  color: #eafcff;
+  background: color-mix(in srgb, var(--neon) 30%, transparent);
+  color: var(--panel);
 }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-track { background: #0b0b15; }
-::-webkit-scrollbar-thumb { background: #23233a; border-radius: 8px; border: 2px solid #0b0b15; }
-::-webkit-scrollbar-thumb:hover { background: #2de2ff66; }
+::-webkit-scrollbar-track { background: var(--abyss); }
+::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--mist) 32%, transparent); border-radius: 8px; border: 2px solid var(--abyss); }
+::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--neon) 45%, transparent); }
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -46,33 +94,37 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 
 /* ---------- surfaces ---------- */
 .glass {
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018));
-  border: 1px solid rgba(150, 163, 255, 0.13);
+  background: linear-gradient(160deg, var(--glass-hi), var(--glass-lo));
+  border: 1px solid var(--glass-border);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
+}
+
+[data-theme="cleanroom"] .glass {
+  box-shadow: 0 12px 32px -24px rgba(16, 21, 35, 0.38);
 }
 
 .glow-hover {
   transition: border-color 0.35s ease, box-shadow 0.35s ease, transform 0.35s ease;
 }
 .glow-hover:hover {
-  border-color: rgba(45, 226, 255, 0.45);
+  border-color: color-mix(in srgb, var(--neon) 45%, transparent);
   box-shadow:
-    0 0 0 1px rgba(45, 226, 255, 0.22),
-    0 10px 50px -14px rgba(45, 226, 255, 0.4),
-    0 4px 30px -10px rgba(160, 107, 255, 0.3);
+    0 0 0 1px color-mix(in srgb, var(--neon) 22%, transparent),
+    0 10px 50px -14px color-mix(in srgb, var(--neon) 40%, transparent),
+    0 4px 30px -10px color-mix(in srgb, var(--viol) 30%, transparent);
 }
 
-.text-glow { text-shadow: 0 0 24px rgba(45, 226, 255, 0.55), 0 0 60px rgba(45, 226, 255, 0.25); }
-.violet-glow { text-shadow: 0 0 24px rgba(160, 107, 255, 0.6), 0 0 60px rgba(160, 107, 255, 0.3); }
+.text-glow { text-shadow: 0 0 24px color-mix(in srgb, var(--neon) 55%, transparent), 0 0 60px color-mix(in srgb, var(--neon) 25%, transparent); }
+.violet-glow { text-shadow: 0 0 24px color-mix(in srgb, var(--viol) 60%, transparent), 0 0 60px color-mix(in srgb, var(--viol) 30%, transparent); }
 
-.hairline { border-color: rgba(150, 163, 255, 0.13); }
+.hairline { border-color: var(--glass-border); }
 
 /* ---------- backgrounds ---------- */
 .grid-bg {
   background-image:
-    linear-gradient(rgba(150, 163, 255, 0.055) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(150, 163, 255, 0.055) 1px, transparent 1px);
+    linear-gradient(var(--chart-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--chart-grid) 1px, transparent 1px);
   background-size: 46px 46px;
   mask-image: radial-gradient(ellipse 90% 70% at 50% 30%, black 30%, transparent 78%);
   -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 30%, black 30%, transparent 78%);
@@ -86,13 +138,14 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
   opacity: 0.05;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
+[data-theme="cleanroom"] .noise-layer { opacity: 0.035; }
 
 .scanline {
   position: absolute;
   left: 0;
   right: 0;
   height: 120px;
-  background: linear-gradient(to bottom, transparent, rgba(45, 226, 255, 0.06), transparent);
+  background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--neon) 6%, transparent), transparent);
   animation: scan 7s linear infinite;
   pointer-events: none;
 }
@@ -117,8 +170,8 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 .anim-spin-slow { animation: spin-slow 26s linear infinite; }
 
 @keyframes pulse-dot {
-  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(92, 255, 192, 0.5); }
-  60% { opacity: 0.65; box-shadow: 0 0 0 6px rgba(92, 255, 192, 0); }
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 color-mix(in srgb, var(--mint) 50%, transparent); }
+  60% { opacity: 0.65; box-shadow: 0 0 0 6px transparent; }
 }
 .anim-pulse-dot { animation: pulse-dot 2s ease-out infinite; }
 
@@ -127,12 +180,24 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
   100% { background-position: 200% 0; }
 }
 .shimmer {
-  background: linear-gradient(100deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.09) 50%, rgba(255,255,255,0) 70%);
+  background: linear-gradient(100deg, transparent 30%, color-mix(in srgb, var(--white) 10%, transparent) 50%, transparent 70%);
   background-size: 200% 100%;
   animation: shimmer 2.2s linear infinite;
 }
 
-@keyframes dash-draw { to { stroke-dashoffset: 0; } }
+/* ---------- theme crossfade ---------- */
+html.theme-anim,
+html.theme-anim *,
+html.theme-anim *::before,
+html.theme-anim *::after {
+  transition:
+    background-color 0.45s ease,
+    border-color 0.45s ease,
+    color 0.45s ease,
+    fill 0.45s ease,
+    stroke 0.45s ease,
+    box-shadow 0.45s ease !important;
+}
 
 /* ---------- dual range slider ---------- */
 .range-dual {
@@ -153,9 +218,9 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
   width: 18px;
   height: 18px;
   border-radius: 9999px;
-  background: #0b0b15;
-  border: 2px solid var(--color-neon);
-  box-shadow: 0 0 12px rgba(45, 226, 255, 0.65);
+  background: var(--abyss);
+  border: 2px solid var(--neon);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--neon) 65%, transparent);
   cursor: grab;
   margin-top: 0;
   transition: transform 0.15s ease;
@@ -166,9 +231,9 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
   width: 16px;
   height: 16px;
   border-radius: 9999px;
-  background: #0b0b15;
-  border: 2px solid var(--color-neon);
-  box-shadow: 0 0 12px rgba(45, 226, 255, 0.65);
+  background: var(--abyss);
+  border: 2px solid var(--neon);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--neon) 65%, transparent);
   cursor: grab;
 }
 .range-dual::-moz-range-track { background: transparent; }
@@ -179,7 +244,7 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 }
 
 .link-underline {
-  background-image: linear-gradient(to right, var(--color-neon), var(--color-viol));
+  background-image: linear-gradient(to right, var(--neon), var(--viol));
   background-size: 0% 1px;
   background-repeat: no-repeat;
   background-position: 0 100%;

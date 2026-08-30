@@ -29,22 +29,22 @@ const SalesChart = ({ data, labels }: { data: number[]; labels: string[] }) => {
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" onMouseLeave={() => setHover(null)}>
         <defs>
           <linearGradient id="salesFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#2de2ff" stopOpacity="0.28" />
-            <stop offset="100%" stopColor="#a06bff" stopOpacity="0.02" />
+            <stop offset="0%" stopOpacity="0.28" style={{ stopColor: "var(--neon)" }} />
+            <stop offset="100%" stopOpacity="0.02" style={{ stopColor: "var(--viol)" }} />
           </linearGradient>
           <linearGradient id="salesStroke" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#2de2ff" />
-            <stop offset="100%" stopColor="#a06bff" />
+            <stop offset="0%" style={{ stopColor: "var(--neon)" }} />
+            <stop offset="100%" style={{ stopColor: "var(--viol)" }} />
           </linearGradient>
         </defs>
         {[0.25, 0.5, 0.75].map((f) => (
-          <line key={f} x1={PAD} x2={W - PAD} y1={H * f} y2={H * f} stroke="rgba(150,163,255,0.08)" strokeDasharray="3 5" />
+          <line key={f} x1={PAD} x2={W - PAD} y1={H * f} y2={H * f} strokeDasharray="3 5" style={{ stroke: "var(--chart-grid)" }} />
         ))}
         <motion.path d={area} fill="url(#salesFill)" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5, duration: 0.8 }} />
         <motion.path
           d={line} fill="none" stroke="url(#salesStroke)" strokeWidth="2.5" strokeLinecap="round"
           initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.6, ease: "easeInOut" }}
-          style={{ filter: "drop-shadow(0 0 6px rgba(45,226,255,0.6))" }}
+          style={{ filter: "drop-shadow(0 0 6px var(--neon-60))" }}
         />
         {pts.map((p, i) => (
           <g key={i}>
@@ -52,7 +52,7 @@ const SalesChart = ({ data, labels }: { data: number[]; labels: string[] }) => {
               x={p[0] - (W / data.length) / 2} y={0} width={W / data.length} height={H} fill="transparent"
               onMouseEnter={() => setHover(i)}
             />
-            <circle cx={p[0]} cy={p[1]} r={hover === i ? 5 : 3} fill="#0b0b15" stroke={hover === i ? "#2de2ff" : "#a06bff"} strokeWidth="2" className="transition-all" />
+            <circle cx={p[0]} cy={p[1]} r={hover === i ? 5 : 3} strokeWidth="2" className="transition-all" style={{ fill: "var(--abyss)", stroke: hover === i ? "var(--neon)" : "var(--viol)" }} />
           </g>
         ))}
       </svg>

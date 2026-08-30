@@ -12,7 +12,16 @@
     <title>NOVA SUPPLY — Gear From the Near Future</title>
     <style>
       html, body { margin: 0; background-color: #07070d; }
+      html[data-theme="cleanroom"], html[data-theme="cleanroom"] body { background-color: #edf0f6; }
     </style>
+    <script>
+      try {
+        var s = JSON.parse(localStorage.getItem("nova-supply-v1") || "null");
+        if (s && s.state && s.state.theme === "cleanroom") {
+          document.documentElement.setAttribute("data-theme", "cleanroom");
+        }
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -7,6 +7,7 @@ import { CATEGORIES } from "../data/catalog";
 import {
   IconCart, IconChevron, IconClose, IconHeart, IconLogo, IconMenu, IconSearch, IconUser, IconLogout, IconGrid, IconBolt,
 } from "./icons";
+import ThemeSwitch from "./ThemeSwitch";
 
 export default function Navbar() {
   const { cart, wishlist, user, setCartOpen, logout } = useStore();
@@ -168,6 +169,12 @@ export default function Navbar() {
 
           {/* actions */}
           <div className="flex items-center gap-1">
+            <div className="hidden md:block lg:hidden mr-1.5">
+              <ThemeSwitch compact />
+            </div>
+            <div className="hidden lg:block mr-1.5">
+              <ThemeSwitch />
+            </div>
             <button
               onClick={() => window.dispatchEvent(new Event("nova:palette"))}
               aria-label="Open command console"
@@ -322,6 +329,10 @@ export default function Navbar() {
               <Link to={user ? "/account" : "/auth"} className="font-display text-lg font-semibold text-viol hover:text-white py-2.5 transition-colors">
                 {user ? "Dashboard" : "Sign in"}
               </Link>
+              <div className="mt-auto pt-6">
+                <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-mist mb-3">Interface protocol</p>
+                <ThemeSwitch />
+              </div>
             </motion.div>
           </motion.div>
         )}
