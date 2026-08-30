@@ -1,9 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { HashRouter, Routes, Route, useLocation, useNavigate, useParams } from "react-router-dom";
-import { MotionConfig } from "framer-motion";
+import { AnimatePresence, MotionConfig, motion, useScroll, useSpring } from "framer-motion";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import CartDrawer from "./components/CartDrawer";
+import CommandPalette from "./components/CommandPalette";
 import { ToastHost, NeonButton } from "./components/ui";
 import { IconArrow } from "./components/icons";
 import Home from "./pages/Home";
@@ -29,6 +30,50 @@ function ProductRoute() {
   return <ProductPage key={slug} />;
 }
 
+function ScrollProgress() {
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, { stiffness: 120, damping: 28, mass: 0.4 });
+  return (
+    <motion.div
+      style={{ scaleX }}
+      className="fixed top-0 left-0 right-0 z-[85] h-[2px] origin-left bg-gradient-to-r from-neon via-[#7dd8ff] to-viol shadow-[0_0_12px_rgba(45,226,255,0.7)]"
+    />
+  );
+}
+
+function CursorGlow() {
+  const [enabled] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia("(pointer: fine)").matches
+  );
+  const x = useSpring(-700, { stiffness: 55, damping: 22 });
+  const y = useSpring(-700, { stiffness: 55, damping: 22 });
+  useEffect(() => {
+    if (!enabled) return;
+    const onMove = (e: MouseEvent) => {
+      x.set(e.clientX - 280);
+      y.set(e.clientY - 280);
+    };
+    window.addEventListener("mousemove", onMove, { passive: true });
+    return () => window.removeEventListener("mousemove", onMove);
+  }, [enabled, x, y]);
+  if (!enabled) return null;
+  return (
+    <motion.div
+      aria-hidden
+      style={{ x, y }}
+      className="fixed top-0 left-0 z-[2] w-[560px] h-[560px] rounded-full pointer-events-none mix-blend-screen"
+    >
+      <div
+        className="w-full h-full rounded-full"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(45,226,255,0.075) 0%, rgba(160,107,255,0.05) 38%, transparent 68%)",
+        }}
+      />
+    </motion.div>
+  );
+}
+
 function NotFound() {
   const nav = useNavigate();
   return (
@@ -42,7 +87,8 @@ function NotFound() {
 }
 
 function Shell() {
-  const { pathname } = useLocation();
+  const location = useLocation();
+  const { pathname } = location;
   const bare = pathname === "/auth";
   return (
     <div className="min-h-screen flex flex-col relative">
@@ -53,26 +99,39 @@ function Shell() {
         <div className="absolute bottom-[-25%] right-[5%] w-[42rem] h-[42rem] rounded-full bg-viol/[0.06] blur-[150px]" />
       </div>
       <div className="noise-layer" aria-hidden />
+      <CursorGlow />
+      <ScrollProgress />
 
       <ScrollToTop />
       <Navbar />
       <main className="flex-1">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/shop" element={<Catalog />} />
-          <Route path="/product/:slug" element={<ProductRoute />} />
-          <Route path="/cart" element={<CartPage />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/account" element={<Account />} />
-          <Route path="/wishlist" element={<Wishlist />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={pathname}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <Routes location={location}>
+              <Route path="/" element={<Home />} />
+              <Route path="/shop" element={<Catalog />} />
+              <Route path="/product/:slug" element={<ProductRoute />} />
+              <Route path="/cart" element={<CartPage />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/account" element={<Account />} />
+              <Route path="/wishlist" element={<Wishlist />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </motion.div>
+        </AnimatePresence>
       </main>
       {!bare && <Footer />}
       <CartDrawer />
       <ToastHost />
+      <CommandPalette />
     </div>
   );
 }

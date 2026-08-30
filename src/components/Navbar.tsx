@@ -5,7 +5,7 @@ import { cartCount, useStore } from "../store/store";
 import { cx, fmt } from "../lib/utils";
 import { CATEGORIES } from "../data/catalog";
 import {
-  IconCart, IconChevron, IconClose, IconHeart, IconLogo, IconMenu, IconSearch, IconUser, IconLogout, IconGrid,
+  IconCart, IconChevron, IconClose, IconHeart, IconLogo, IconMenu, IconSearch, IconUser, IconLogout, IconGrid, IconBolt,
 } from "./icons";
 
 export default function Navbar() {
@@ -168,6 +168,15 @@ export default function Navbar() {
 
           {/* actions */}
           <div className="flex items-center gap-1">
+            <button
+              onClick={() => window.dispatchEvent(new Event("nova:palette"))}
+              aria-label="Open command console"
+              className="hidden md:flex items-center gap-2 mr-1.5 pl-3 pr-2 h-9 rounded-full glass text-mist hover:text-neon hover:border-neon/45 transition-all duration-300 group"
+            >
+              <IconBolt size={13} className="text-neon group-hover:text-glow" />
+              <span className="text-[10px] font-mono tracking-[0.18em] uppercase">console</span>
+              <kbd className="text-[9px] font-mono border border-white/12 rounded px-1 py-px text-mist/70">⌘K</kbd>
+            </button>
             <Link
               to="/wishlist"
               aria-label="Wishlist"
