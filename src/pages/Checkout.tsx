@@ -3,7 +3,7 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { cartSubtotal, useStore } from "../store/store";
 import type { Address, Order } from "../lib/types";
-import { SHIPPING_METHODS, PROMO_CODES } from "../data/catalog";
+import { SHIPPING_METHODS } from "../data/catalog";
 import { cx, fmt, uid } from "../lib/utils";
 import { Field, inputCls, NeonButton } from "../components/ui";
 import { IconArrow, IconCard, IconCheck, IconChevron, IconPin, IconStripe, IconTruck } from "../components/icons";
@@ -11,8 +11,9 @@ import { IconArrow, IconCard, IconCheck, IconChevron, IconPin, IconStripe, IconT
 const STEPS = ["Address", "Shipping", "Payment"];
 
 export default function Checkout() {
-  const { cart, products, user, placeOrder, saveAddress } = useStore();
+  const { cart, products, user, placeOrder, saveAddress, promos, freeShipThreshold } = useStore();
   const toast = useStore((s) => s.toast);
+  const activePromos = promos.filter((p) => p.active);
   const nav = useNavigate();
   const [step, setStep] = useState(0);
   const [done, setDone] = useState<Order | null>(null);
@@ -29,7 +30,7 @@ export default function Checkout() {
 
   const subtotal = cartSubtotal(cart, products);
   const method = SHIPPING_METHODS.find((m) => m.id === shipId)!;
-  const shipCost = subtotal >= 150 && method.cost > 0 ? 0 : method.cost;
+  const shipCost = subtotal >= freeShipThreshold && method.cost > 0 ? 0 : method.cost;
 
   useEffect(() => {
     window.scrollTo({ top: 0 });
@@ -238,7 +239,7 @@ export default function Checkout() {
                 <div className="space-y-4">
                   <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-mist mb-1">Select freight lane</p>
                   {SHIPPING_METHODS.map((m) => {
-                    const cost = subtotal >= 150 && m.cost > 0 ? 0 : m.cost;
+                    const cost = subtotal >= freeShipThreshold && m.cost > 0 ? 0 : m.cost;
                     const active = shipId === m.id;
                     return (
                       <motion.button
@@ -333,9 +334,10 @@ export default function Checkout() {
                         <button
                           onClick={() => {
                             const c = promo.trim().toUpperCase();
-                            if (PROMO_CODES[c]) {
-                              setDiscount(Math.round(subtotal * PROMO_CODES[c]));
-                              toast("success", `Code ${c} applied`);
+                            const found = activePromos.find((p) => p.code === c);
+                            if (found) {
+                              setDiscount(Math.round(subtotal * (found.pct / 100)));
+                              toast("success", `Code ${c} applied`, `-${found.pct}% locked in.`);
                             } else toast("error", "Unknown code", "Try NEON10 or WEARLY25.");
                           }}
                           className="shrink-0 px-4 rounded-md border border-neon/40 text-neon text-xs font-mono uppercase hover:bg-neon/10 transition-colors"

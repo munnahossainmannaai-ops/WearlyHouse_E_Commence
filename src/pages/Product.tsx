@@ -5,7 +5,7 @@ import { useStore } from "../store/store";
 import { cx, fmt, dateFmt } from "../lib/utils";
 import ProductCard from "../components/ProductCard";
 import { NeonButton, QtyStepper, Reveal, Stars, StockMeter, Tag, Field, inputCls, SectionHead } from "../components/ui";
-import { IconArrow, IconCart, IconChevron, IconHeart, IconShield, IconStar, IconTruck, IconZoom, IconBolt } from "../components/icons";
+import { IconArrow, IconCart, IconCheck, IconChevron, IconHeart, IconShield, IconStar, IconTruck, IconZoom, IconBolt } from "../components/icons";
 
 const VIEWS = [
   { label: "Unit", pos: "center", scale: 1 },
@@ -18,7 +18,7 @@ export default function ProductPage() {
   const nav = useNavigate();
   const products = useStore((s) => s.products);
   const reviews = useStore((s) => s.reviews);
-  const { addToCart, toggleWishlist, wishlist, user, addReview, recordView } = useStore();
+  const { addToCart, toggleWishlist, wishlist, user, addReview, recordView, requestRestock, freeShipThreshold } = useStore();
 
   const product = products.find((p) => p.slug === slug);
 
@@ -50,6 +50,8 @@ export default function ProductPage() {
   const [rBody, setRBody] = useState("");
   const [rErr, setRErr] = useState("");
   const [rHover, setRHover] = useState(0);
+  const [notifyEmail, setNotifyEmail] = useState(user?.email ?? "");
+  const [notified, setNotified] = useState(false);
 
   const prodReviews = useMemo(() => reviews.filter((r) => r.productId === product?.id), [reviews, product]);
 
@@ -243,11 +245,41 @@ export default function ProductPage() {
               <IconBolt size={16} /> Buy now — skip the queue
             </NeonButton>
           )}
+          {out && (
+            <div className="mt-3.5 glass rounded-xl p-4 border-amber2/30">
+              <p className="text-sm text-white font-medium flex items-center gap-2">
+                <IconBolt size={15} className="text-amber2" /> This unit is offline.
+              </p>
+              <p className="text-xs text-mist mt-1 mb-3">Leave an uplink and we'll ping you the moment it's back in orbit.</p>
+              {notified ? (
+                <p className="text-mint text-sm flex items-center gap-2"><IconCheck size={14} /> You're on the list — watch your inbox.</p>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    value={notifyEmail}
+                    onChange={(e) => setNotifyEmail(e.target.value)}
+                    placeholder="you@station.io"
+                    type="email"
+                    aria-label="Email for restock alert"
+                    className={inputCls()}
+                  />
+                  <button
+                    onClick={() => {
+                      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(notifyEmail)) return;
+                      requestRestock(product.id, notifyEmail);
+                      setNotified(true);
+                    }}
+                    className="shrink-0 px-4 rounded-md bg-gradient-to-r from-amber2 to-rose2 text-void text-xs font-display font-semibold clip-notch"
+                  >Notify me</button>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* trust strip */}
           <div className="grid grid-cols-2 gap-px bg-white/8 rounded-xl overflow-hidden mt-8 border hairline">
             {[
-              { icon: <IconTruck size={17} />, t: "Free freight over $150" },
+              { icon: <IconTruck size={17} />, t: `Free freight over ${fmt(freeShipThreshold)}` },
               { icon: <IconShield size={17} />, t: "2-year House warranty" },
               { icon: <IconBolt size={17} />, t: "Pairs instantly to grid" },
               { icon: <IconArrow size={17} />, t: "30-day timeline returns" },

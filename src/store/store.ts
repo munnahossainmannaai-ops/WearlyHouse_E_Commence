@@ -73,7 +73,7 @@ interface Store {
 const seedUsers: User[] = [
   {
     id: "u-admin",
-    name: "Nova Admin",
+    name: "House Admin",
     email: "admin@nova.supply",
     passHash: hashPass("nova-admin"),
     role: "admin",
@@ -112,7 +112,7 @@ const seedOrders = (): Order[] => {
   const addr = seedUsers[1].addresses[0];
   return [
     {
-      id: "NV-DEMO02",
+      id: "WH-DEMO02",
       userId: "u-demo",
       userEmail: "demo@nova.space",
       items: [{ productId: drone.id, name: drone.name, image: drone.image, color: drone.colors[0].name, qty: 1, price: drone.price }],
@@ -132,7 +132,7 @@ const seedOrders = (): Order[] => {
       createdAt: Date.now() - 3 * d,
     },
     {
-      id: "NV-DEMO01",
+      id: "WH-DEMO01",
       userId: "u-demo",
       userEmail: "demo@nova.space",
       items: [
@@ -216,7 +216,7 @@ export const useStore = create<Store>()(
           active: true,
         };
         set((s) => ({ users: [...s.users, u], user: u }));
-        get().toast("success", "Account created", "Welcome to NOVA SUPPLY.");
+        get().toast("success", "Account created", "Welcome to Wearly House.");
         return null;
       },
       quickLogin: (email) => {
@@ -382,7 +382,7 @@ export const useStore = create<Store>()(
         });
         const subtotal = items.reduce((a, i) => a + i.price * i.qty, 0);
         const order: Order = {
-          id: `NV-${Date.now().toString(36).toUpperCase()}`,
+          id: `WH-${Date.now().toString(36).toUpperCase()}`,
           userId: user?.id ?? "guest",
           userEmail: user?.email ?? "guest",
           items,
@@ -472,6 +472,11 @@ export const useStore = create<Store>()(
         orders: s.orders,
         reviews: s.reviews,
         recentlyViewed: s.recentlyViewed,
+        views: s.views,
+        freeShipThreshold: s.freeShipThreshold,
+        lowStockThreshold: s.lowStockThreshold,
+        promos: s.promos,
+        restockRequests: s.restockRequests,
       }),
     }
   )

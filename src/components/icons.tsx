@@ -194,6 +194,13 @@ export const IconDownload = (p: P) => (
   </svg>
 );
 
+export const IconSettings = (p: P) => (
+  <svg {...base(p)}>
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.2 13.9a7.4 7.4 0 0 0 0-3.8l1.9-1.5-1.8-3.1-2.3.8a7.4 7.4 0 0 0-3.3-1.9L13.3 2h-2.6l-.4 2.4a7.4 7.4 0 0 0-3.3 1.9l-2.3-.8-1.8 3.1 1.9 1.5a7.4 7.4 0 0 0 0 3.8l-1.9 1.5 1.8 3.1 2.3-.8a7.4 7.4 0 0 0 3.3 1.9l.4 2.4h2.6l.4-2.4a7.4 7.4 0 0 0 3.3-1.9l2.3.8 1.8-3.1z" />
+  </svg>
+);
+
 export const IconUsers = (p: P) => (
   <svg {...base(p)}>
     <circle cx="9" cy="8.5" r="3" />

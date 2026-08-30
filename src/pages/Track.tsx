@@ -41,7 +41,7 @@ export default function Track() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && run(query)}
-          placeholder="NV-XXXXXXXX"
+          placeholder="WH-XXXXXXXX"
           className="flex-1 bg-transparent outline-none font-mono text-sm text-white placeholder:text-mist/40 uppercase tracking-wider"
         />
         <NeonButton onClick={() => run(query)} className="!px-5 !py-2.5">
@@ -154,7 +154,7 @@ export default function Track() {
         <div className="mt-10 glass rounded-2xl p-6 flex items-start gap-4">
           <Tag tone="neon">TIP</Tag>
           <p className="text-sm text-mist leading-relaxed">
-            Your manifest ID looks like <span className="font-mono text-neon">NV-XXXXXXXX</span> and lives at the top of your order
+            Your manifest ID looks like <span className="font-mono text-neon">WH-XXXXXXXX</span> and lives at the top of your order
             confirmation. Freight ETAs update the moment a package hands off to the orbital carrier.
           </p>
         </div>

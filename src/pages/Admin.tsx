@@ -2,13 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useStore } from "../store/store";
-import type { Order, OrderStatus, Product } from "../lib/types";
+import type { Order, OrderStatus, Product, RestockRequest } from "../lib/types";
 import { CATEGORIES, PRODUCT_IMAGES } from "../data/catalog";
 import { cx, fmt, dateFmt, timeAgo, seededSeries, STATUS_META, ORDER_FLOW } from "../lib/utils";
 import { Counter, Field, inputCls, Modal, NeonButton, Reveal, Tag, StockMeter } from "../components/ui";
 import {
   IconAlert, IconBolt, IconBox, IconCard, IconChart, IconCheck, IconChevron, IconDownload,
-  IconEdit, IconEye, IconMinus, IconPin, IconPlus, IconSearch, IconTrash, IconTruck, IconUsers,
+  IconEdit, IconEye, IconMinus, IconPin, IconPlus, IconSearch, IconSettings, IconTrash, IconTruck, IconUsers,
 } from "../components/icons";
 
 const TABS = [
@@ -17,6 +17,7 @@ const TABS = [
   { id: "products", label: "Products", icon: <IconBox size={15} /> },
   { id: "orders", label: "Orders", icon: <IconTruck size={15} /> },
   { id: "users", label: "Users", icon: <IconUsers size={15} /> },
+  { id: "settings", label: "Settings", icon: <IconSettings size={15} /> },
 ] as const;
 
 /* ================= chart primitives ================= */
@@ -158,7 +159,11 @@ const blankProduct = (): Product => ({
 
 /* ================= page ================= */
 export default function Admin() {
-  const { user, users, products, orders, upsertProduct, deleteProduct, setStock, setOrderStatus, toast } = useStore();
+  const {
+    user, users, products, orders, upsertProduct, deleteProduct, setStock, setOrderStatus, toast,
+    freeShipThreshold, setFreeShipThreshold, lowStockThreshold, setLowStockThreshold,
+    promos, addPromo, removePromo, togglePromo, restockRequests,
+  } = useStore();
   const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("overview");
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Product | null>(null);
@@ -167,7 +172,11 @@ export default function Admin() {
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [pq, setPq] = useState("");
   const [range, setRange] = useState<7 | 30 | 90>(30);
-  const [threshold, setThreshold] = useState(8);
+  const threshold = lowStockThreshold;
+  const setThreshold = setLowStockThreshold;
+  const [newCode, setNewCode] = useState("");
+  const [newPct, setNewPct] = useState(10);
+  const [promoErr, setPromoErr] = useState("");
   const [clock, setClock] = useState("");
 
   useEffect(() => {
@@ -778,6 +787,138 @@ export default function Admin() {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* ================= SETTINGS ================= */}
+      {tab === "settings" && (
+        <div className="grid lg:grid-cols-2 gap-6">
+          <Reveal>
+            <div className="glass rounded-2xl p-6 h-full">
+              <h3 className="font-display font-bold text-white flex items-center gap-2.5">
+                <IconSettings size={17} className="text-neon" /> House rules
+              </h3>
+              <p className="text-xs text-mist mt-1 mb-6">These levers re-price the storefront in real time.</p>
+
+              <div className="mb-8">
+                <div className="flex items-baseline justify-between mb-3">
+                  <label htmlFor="freight-threshold" className="text-[11px] font-mono uppercase tracking-[0.18em] text-mist">Free-freight threshold</label>
+                  <span className="font-mono text-2xl text-neon tabular-nums">{fmt(freeShipThreshold)}</span>
+                </div>
+                <input
+                  id="freight-threshold" type="range" min={0} max={500} step={10}
+                  value={freeShipThreshold}
+                  onChange={(e) => setFreeShipThreshold(Number(e.target.value))}
+                  className="w-full" style={{ accentColor: "var(--neon)" }}
+                />
+                <p className="text-[11px] text-mist/70 mt-2.5 leading-relaxed">
+                  Orders over <span className="font-mono text-fog">{fmt(freeShipThreshold)}</span> ship free — applied live in the cart and at checkout.
+                </p>
+              </div>
+
+              <div>
+                <div className="flex items-baseline justify-between mb-3">
+                  <label htmlFor="stock-threshold" className="text-[11px] font-mono uppercase tracking-[0.18em] text-mist">Low-stock alert at</label>
+                  <span className="font-mono text-2xl text-amber2 tabular-nums">{lowStockThreshold} <span className="text-xs text-mist">units</span></span>
+                </div>
+                <input
+                  id="stock-threshold" type="range" min={1} max={15} step={1}
+                  value={lowStockThreshold}
+                  onChange={(e) => setLowStockThreshold(Number(e.target.value))}
+                  className="w-full" style={{ accentColor: "var(--amber2)" }}
+                />
+                <p className="text-[11px] text-mist/70 mt-2.5 leading-relaxed">
+                  <span className="font-mono text-fog">{lowStock.length}</span> unit{lowStock.length === 1 ? "" : "s"} currently flagged in Inventory at this level.
+                </p>
+              </div>
+            </div>
+          </Reveal>
+
+          <Reveal delay={0.08}>
+            <div className="glass rounded-2xl p-6 h-full">
+              <h3 className="font-display font-bold text-white">Promo codes</h3>
+              <p className="text-xs text-mist mt-1 mb-5">Deploy checkout discounts. The storefront validates against this list.</p>
+
+              <div className="space-y-2.5 mb-5">
+                {promos.length === 0 && <p className="text-xs text-mist">No codes deployed.</p>}
+                {promos.map((p) => (
+                  <div key={p.code} className={cx("flex items-center gap-3 rounded-xl p-3 border transition-all", p.active ? "bg-white/[0.03] border-white/8" : "opacity-45 border-white/5")}>
+                    <span className="font-mono text-sm text-neon tracking-widest">{p.code}</span>
+                    <span className="text-[11px] font-mono text-mist">−{p.pct}%</span>
+                    <span className="ml-auto" />
+                    <button onClick={() => togglePromo(p.code)} role="switch" aria-checked={p.active} aria-label={`Toggle ${p.code}`}
+                      className={cx("w-9 h-5 rounded-full p-0.5 transition-colors", p.active ? "bg-gradient-to-r from-neon to-viol" : "bg-white/10")}>
+                      <span className={cx("block w-4 h-4 rounded-full bg-void transition-transform", p.active && "translate-x-4")} />
+                    </button>
+                    <button onClick={() => removePromo(p.code)} aria-label={`Revoke ${p.code}`} className="text-mist hover:text-rose2 transition-colors">
+                      <IconTrash size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="border-t hairline pt-4">
+                <div className="flex gap-2">
+                  <input value={newCode} onChange={(e) => setNewCode(e.target.value.toUpperCase())} placeholder="CODE" maxLength={12}
+                    className={cx(inputCls(promoErr), "uppercase font-mono flex-1")} aria-label="New promo code" />
+                  <input type="number" value={newPct} onChange={(e) => setNewPct(Number(e.target.value))} min={1} max={90}
+                    className={cx(inputCls(), "w-20 font-mono")} aria-label="Discount percent" />
+                  <button
+                    onClick={() => {
+                      const err = addPromo(newCode, newPct);
+                      setPromoErr(err ?? "");
+                      if (!err) { setNewCode(""); setNewPct(10); }
+                    }}
+                    className="shrink-0 px-4 rounded-md bg-gradient-to-r from-neon to-viol text-void text-xs font-display font-semibold clip-notch"
+                  >Deploy</button>
+                </div>
+                {promoErr && <p className="text-rose2 text-xs mt-2">{promoErr}</p>}
+              </div>
+            </div>
+          </Reveal>
+
+          <Reveal delay={0.12} className="lg:col-span-2">
+            <div className="glass rounded-2xl p-6">
+              <h3 className="font-display font-bold text-white flex items-center gap-2.5">
+                <IconBolt size={16} className="text-amber2" /> Restock waitlist
+              </h3>
+              <p className="text-xs text-mist mt-1 mb-5">Shoppers who asked to be pinged when a sold-out unit returns.</p>
+
+              {restockRequests.length === 0 ? (
+                <p className="text-sm text-mint flex items-center gap-2"><IconCheck size={14} /> No one is waiting on anything right now.</p>
+              ) : (
+                <div className="grid md:grid-cols-2 gap-3">
+                  {Object.entries(
+                    restockRequests.reduce<Record<string, RestockRequest[]>>((acc, r) => {
+                      (acc[r.productId] = acc[r.productId] ?? []).push(r);
+                      return acc;
+                    }, {})
+                  ).map(([pid, reqs]) => {
+                    const p = products.find((x) => x.id === pid);
+                    if (!p) return null;
+                    return (
+                      <div key={pid} className="flex items-center gap-3.5 bg-white/[0.03] rounded-xl p-3.5 border border-white/6">
+                        <img src={p.image} alt="" className="w-12 h-12 rounded-lg object-cover border hairline" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-white font-medium truncate">{p.name}</p>
+                          <p className="text-[11px] font-mono text-mist">{reqs.length} waiting · {p.stock} in stock</p>
+                          <p className="text-[10px] text-mist/60 truncate">{reqs.map((r) => r.email).join(", ")}</p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setStock(pid, p.stock + 25);
+                            useStore.setState((s) => ({ restockRequests: s.restockRequests.filter((r) => r.productId !== pid) }));
+                            toast("success", "Restocked & notified", `${reqs.length} shopper${reqs.length > 1 ? "s" : ""} pinged about ${p.name}.`);
+                          }}
+                          className="shrink-0 px-3 py-2 rounded-md border border-mint/40 text-mint text-[11px] font-mono hover:bg-mint/10 transition-colors"
+                        >+25 &amp; notify</button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </Reveal>
         </div>
       )}
 

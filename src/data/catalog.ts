@@ -53,7 +53,7 @@ export const PRODUCTS: Product[] = [
       { label: "Driver", value: "50mm graphene, maglev suspension" },
       { label: "Spatial audio", value: "360° field, 1kHz head-tracking" },
       { label: "Battery", value: "42h playback · 5h from 10min dock" },
-      { label: "Latency", value: "9ms over NovaLink wireless" },
+      { label: "Latency", value: "9ms over HouseLink wireless" },
       { label: "ANC depth", value: "-48dB adaptive" },
       { label: "Weight", value: "288g" },
     ],
@@ -110,7 +110,7 @@ export const PRODUCTS: Product[] = [
     specs: [
       { label: "Camera", value: "1\" sensor, 4K/120, 3-axis gimbal" },
       { label: "Flight time", value: "38 min" },
-      { label: "Range", value: "12km NovaLink" },
+      { label: "Range", value: "12km HouseLink" },
       { label: "Top speed", value: "21 m/s" },
       { label: "Weight", value: "249g — registration-free" },
     ],
@@ -307,7 +307,7 @@ export const PRODUCTS: Product[] = [
     specs: [
       { label: "Actuators", value: "128 per glove, 120Hz" },
       { label: "Feedback", value: "Texture, force, recoil" },
-      { label: "Latency", value: "<4ms NovaLink" },
+      { label: "Latency", value: "<4ms HouseLink" },
       { label: "Battery", value: "8h continuous" },
       { label: "Care", value: "Machine washable" },
     ],
@@ -319,7 +319,7 @@ const REVIEW_POOL: [string, number, string, string][] = [
   ["Kael Voss", 5, "Unreal build quality", "Shipping was fast, packaging felt like unboxing spacecraft hardware. Performance is exactly as specced — maybe better."],
   ["Iris Chen", 5, "Worth every credit", "I compared three competitors before buying. Nothing else comes close at this tier. The finish is flawless."],
   ["Dmitri Sokolov", 4, "Excellent, minor quibble", "9/10 experience. Docking software took a minute to set up, but support walked me through it in one message."],
-  ["Amara Okafor", 5, "My third Nova order", "The ecosystem just works. Everything paired instantly with my other gear. Build quality is consistently absurd."],
+  ["Amara Okafor", 5, "My third House order", "The ecosystem just works. Everything paired instantly with my other gear. Build quality is consistently absurd."],
   ["Juno Reyes", 4, "Impressed", "Exceeded expectations for the price band. Battery life matches the claims exactly, which almost never happens."],
   ["Theo Lindqvist", 5, "Future, delivered", "Feels like it fell off a ship from 2040. Zero regrets, already eyeing the rest of the lineup."],
   ["Sable Moreau", 5, "Reference tier", "I review tech for a living. This is the unit I'll benchmark everything else against this year."],
@@ -366,7 +366,7 @@ export const TESTIMONIALS = [
     rating: 5,
   },
   {
-    quote: "Every order arrives in packaging that feels like it was engineered, not packed. The products live up to it. Nova is the only store I trust with four-figure gear.",
+    quote: "Every order arrives in packaging that feels like it was engineered, not packed. The products live up to it. Wearly House is the only store I trust with four-figure gear.",
     name: "Oskar Blom",
     role: "Systems architect · Oslo",
     rating: 5,
@@ -376,10 +376,5 @@ export const TESTIMONIALS = [
 export const SHIPPING_METHODS = [
   { id: "orbital", name: "Orbital Express", eta: "Next-day drop", cost: 24, note: "Priority atmospheric re-entry, signature required" },
   { id: "glide", name: "Glide Standard", eta: "2–4 days", cost: 9, note: "Tracked ground + air hybrid route" },
-  { id: "freight", name: "Freight Saver", eta: "5–8 days", cost: 0, note: "Free over $150 · carbon-neutral" },
+  { id: "freight", name: "Freight Saver", eta: "5–8 days", cost: 0, note: "Always free · carbon-neutral" },
 ];
-
-export const PROMO_CODES: Record<string, number> = {
-  NEON10: 0.1,
-  NOVA25: 0.25,
-};

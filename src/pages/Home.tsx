@@ -338,7 +338,7 @@ export default function Home() {
             {[
               { icon: <IconTruck size={22} />, t: "Orbital freight", d: "Free over $150 · next-day express drops to most sectors." },
               { icon: <IconShield size={22} />, t: "2-year warranty", d: "Every unit covered. Replacements ship before returns land." },
-              { icon: <IconBolt size={22} />, t: "Instant uplink", d: "All gear pairs to the Nova grid out of the box, zero friction." },
+              { icon: <IconBolt size={22} />, t: "Instant uplink", d: "All gear pairs to the House grid out of the box, zero friction." },
               { icon: <IconOrbit size={22} />, t: "30-day returns", d: "Change your timeline. Full refund, no interrogation." },
             ].map((f, i) => (
               <div key={f.t} className="p-6 flex gap-4 items-start group hover:bg-white/[0.03] transition-colors">

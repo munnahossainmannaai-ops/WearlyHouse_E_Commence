@@ -4,13 +4,14 @@ import { AnimatePresence, motion } from "framer-motion";
 import { cartCount, cartSubtotal, useStore } from "../store/store";
 import { fmt } from "../lib/utils";
 import { NeonButton, QtyStepper, Field, inputCls } from "../components/ui";
-import { PROMO_CODES, SHIPPING_METHODS } from "../data/catalog";
+import { SHIPPING_METHODS } from "../data/catalog";
 import { IconArrow, IconCart, IconCheck, IconTrash } from "../components/icons";
 
 export default function CartPage() {
-  const { cart, products, setQty, removeFromCart, clearCart } = useStore();
+  const { cart, products, setQty, removeFromCart, clearCart, promos, freeShipThreshold } = useStore();
   const toast = useStore((s) => s.toast);
   const nav = useNavigate();
+  const activePromos = promos.filter((p) => p.active);
   const [promo, setPromo] = useState("");
   const [applied, setApplied] = useState<string | null>(null);
   const [promoErr, setPromoErr] = useState("");
@@ -20,16 +21,19 @@ export default function CartPage() {
     const p = products.find((x) => x.id === c.productId);
     return p ? [{ ...c, product: p }] : [];
   });
-  const freeShip = subtotal >= 150;
+  const freeShip = subtotal >= freeShipThreshold;
   const shipCost = rows.length === 0 ? 0 : freeShip ? 0 : SHIPPING_METHODS[1].cost;
-  const discount = applied ? Math.round(subtotal * PROMO_CODES[applied]) : 0;
+  const discount = applied
+    ? Math.round(subtotal * ((activePromos.find((p) => p.code === applied)?.pct ?? 0) / 100))
+    : 0;
 
   const applyPromo = () => {
     const code = promo.trim().toUpperCase();
-    if (PROMO_CODES[code]) {
+    const found = activePromos.find((p) => p.code === code);
+    if (found) {
       setApplied(code);
       setPromoErr("");
-      toast("success", `Code ${code} locked in`, `-${Math.round(PROMO_CODES[code] * 100)}% on hardware.`);
+      toast("success", `Code ${code} locked in`, `-${found.pct}% on hardware.`);
     } else {
       setPromoErr("Unknown code. Try NEON10.");
     }
@@ -173,7 +177,7 @@ export default function CartPage() {
             <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-neon mb-2">Freight note</p>
             {freeShip
               ? "Your manifest qualifies for free orbital freight. Nice."
-              : `Add ${fmt(150 - subtotal)} more to unlock free orbital freight.`}
+              : `Add ${fmt(freeShipThreshold - subtotal)} more to unlock free orbital freight.`}
           </div>
         </div>
       </div>
