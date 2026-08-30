@@ -76,7 +76,7 @@ export default function Navbar() {
           <Link to="/" className="flex items-center gap-2.5 group shrink-0">
             <IconLogo size={26} className="transition-transform duration-500 group-hover:rotate-[18deg]" />
             <span className="font-display font-bold tracking-[0.14em] text-white text-sm">
-              NOVA<span className="text-neon">//</span>SUPPLY
+              WEARLY<span className="text-neon">//</span>HOUSE
             </span>
           </Link>
 
@@ -300,7 +300,7 @@ export default function Navbar() {
             >
               <div className="flex items-center justify-between mb-6">
                 <span className="font-display font-bold tracking-[0.14em] text-white text-sm">
-                  NOVA<span className="text-neon">//</span>SUPPLY
+                  WEARLY<span className="text-neon">//</span>HOUSE
                 </span>
                 <button onClick={() => setMobile(false)} aria-label="Close menu" className="text-mist hover:text-white">
                   <IconClose size={20} />

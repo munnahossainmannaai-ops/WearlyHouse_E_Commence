@@ -103,6 +103,25 @@ export default function CartPage() {
         <div className="h-fit lg:sticky lg:top-24 space-y-4">
           <div className="glass rounded-2xl p-6">
             <h3 className="font-display font-bold text-white mb-5">Order readout</h3>
+
+            {/* free freight progress */}
+            <div className="mb-5">
+              <div className="flex justify-between text-[10px] font-mono uppercase tracking-[0.15em] mb-1.5">
+                <span className={freeShip ? "text-mint" : "text-mist"}>{freeShip ? "Free orbital freight unlocked" : "Orbital freight progress"}</span>
+                <span className={freeShip ? "text-mint" : "text-neon"}>{freeShip ? "100%" : `${Math.min(100, Math.round((subtotal / 150) * 100))}%`}</span>
+              </div>
+              <div className="h-1.5 bg-white/8 rounded-full overflow-hidden">
+                <motion.div
+                  animate={{ width: `${Math.min(100, (subtotal / 150) * 100)}%` }}
+                  transition={{ type: "spring", stiffness: 90, damping: 20 }}
+                  className="h-full rounded-full bg-gradient-to-r from-neon to-viol shadow-[0_0_10px_rgba(45,226,255,0.6)]"
+                />
+              </div>
+              {!freeShip && (
+                <p className="text-[10px] text-mist mt-1.5">Add <span className="text-neon font-mono">{fmt(150 - subtotal)}</span> more to unlock free freight.</p>
+              )}
+            </div>
+
             <div className="space-y-3 text-sm">
               <div className="flex justify-between"><span className="text-mist">Units ({cartCount(cart)})</span><span className="font-mono text-fog">{fmt(subtotal)}</span></div>
               <div className="flex justify-between">

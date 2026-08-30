@@ -42,7 +42,7 @@ function TrackingTimeline({ order }: { order: Order }) {
 }
 
 export default function Account() {
-  const { user, orders, updateProfile, changePassword, saveAddress, deleteAddress } = useStore();
+  const { user, orders, updateProfile, changePassword, saveAddress, deleteAddress, reorder } = useStore();
   const toast = useStore((s) => s.toast);
   const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("orders");
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -197,6 +197,13 @@ export default function Account() {
                             </div>
                           </div>
                         </div>
+                        {o.status !== "cancelled" && (
+                          <div className="flex justify-end border-t hairline pt-4">
+                            <NeonButton variant="ghost" onClick={() => reorder(o.items)}>
+                              <IconBox size={15} /> Reorder this manifest
+                            </NeonButton>
+                          </div>
+                        )}
                       </div>
                     </motion.div>
                   </div>

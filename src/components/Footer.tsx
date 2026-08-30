@@ -77,11 +77,11 @@ export default function Footer() {
             <Link to="/" className="flex items-center gap-2.5 mb-4">
               <IconLogo size={28} />
               <span className="font-display font-bold tracking-[0.14em] text-white">
-                NOVA<span className="text-neon">//</span>SUPPLY
+                WEARLY<span className="text-neon">//</span>HOUSE
               </span>
             </Link>
             <p className="text-sm text-mist leading-relaxed max-w-xs mb-6">
-              Consumer hardware from the near future — sourced, tested and shipped from low orbit since 2049.
+              A future-wear &amp; hardware atelier — cut, tested and shipped from low orbit since 2049.
             </p>
             <div className="glass rounded-xl p-4 max-w-xs">
               <div className="flex items-center justify-between mb-2">
@@ -96,7 +96,7 @@ export default function Footer() {
               </div>
               <div className="flex items-center justify-between text-xs mt-1">
                 <span className="text-mist">Build</span>
-                <span className="font-mono text-fog">v7.3.1-orbital</span>
+                <span className="font-mono text-fog">v8.1.0-house</span>
               </div>
             </div>
           </div>
@@ -119,6 +119,7 @@ export default function Footer() {
               <li><Link to="/account" className="text-mist hover:text-neon transition-colors">Dashboard & orders</Link></li>
               <li><Link to="/wishlist" className="text-mist hover:text-neon transition-colors">Wishlist</Link></li>
               <li><Link to="/cart" className="text-mist hover:text-neon transition-colors">Cargo hold</Link></li>
+              <li><Link to="/track" className="text-mist hover:text-neon transition-colors">Track a drop</Link></li>
               <li><Link to="/auth" className="text-mist hover:text-neon transition-colors">Sign in / register</Link></li>
               <li><Link to="/admin" className="text-mist hover:text-viol transition-colors">Mission control (admin)</Link></li>
             </ul>
@@ -127,7 +128,7 @@ export default function Footer() {
           <div className="md:col-span-3">
             <p className="font-mono text-[11px] tracking-[0.25em] uppercase text-white mb-4">Accepted channels</p>
             <div className="flex flex-wrap gap-2 mb-6">
-              {["STRIPE", "NOVA PAY", "ORBITAL", "Q-COIN"].map((m) => (
+              {["STRIPE", "HOUSE PAY", "ORBITAL", "Q-COIN"].map((m) => (
                 <span key={m} className="px-3 py-1.5 glass rounded-md text-[10px] font-mono tracking-[0.18em] text-mist">
                   {m}
                 </span>
@@ -140,7 +141,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t hairline pt-6 flex flex-col md:flex-row items-center justify-between gap-3 text-[11px] text-mist/70">
-          <p>© 2049 NOVA SUPPLY INDUSTRIES · All timelines reserved.</p>
+          <p>© 2049 WEARLY HOUSE ATELIER · All timelines reserved.</p>
           <p className="font-mono tracking-[0.2em] uppercase">Prices in USD · Ships to 120+ sectors</p>
         </div>
       </div>

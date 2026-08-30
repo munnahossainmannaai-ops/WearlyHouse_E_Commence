@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useStore } from "../store/store";
 import { cx, fmt } from "../lib/utils";
-import { IconArrow, IconBolt, IconBox, IconCart, IconGrid, IconHeart, IconSearch, IconSpark, IconUser } from "./icons";
+import { IconArrow, IconBolt, IconBox, IconCart, IconGrid, IconHeart, IconSearch, IconSpark, IconTruck, IconUser } from "./icons";
 
 interface Cmd {
   id: string;
@@ -62,6 +62,7 @@ export default function CommandPalette() {
       { id: "n-shop", group: "Navigate", label: "Full catalog", hint: "10 units", icon: <IconGrid size={15} />, run: go(() => nav("/shop")) },
       { id: "n-cart", group: "Navigate", label: "Cargo hold", hint: "cart", icon: <IconCart size={15} />, run: go(() => nav("/cart")) },
       { id: "n-wish", group: "Navigate", label: "Wishlist", hint: "pinned", icon: <IconHeart size={15} />, run: go(() => nav("/wishlist")) },
+      { id: "n-track", group: "Navigate", label: "Track a drop", hint: "by manifest ID", icon: <IconTruck size={15} />, run: go(() => nav("/track")) },
       { id: "n-acct", group: "Navigate", label: user ? "Operator dashboard" : "Sign in / register", hint: "account", icon: <IconUser size={15} />, run: go(() => nav(user ? "/account" : "/auth")) },
       ...(user?.role === "admin"
         ? [{ id: "n-admin", group: "Navigate", label: "Mission control", hint: "admin", icon: <IconBox size={15} />, run: go(() => nav("/admin")) }]

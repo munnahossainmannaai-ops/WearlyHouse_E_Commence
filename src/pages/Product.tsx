@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useStore } from "../store/store";
@@ -18,9 +18,25 @@ export default function ProductPage() {
   const nav = useNavigate();
   const products = useStore((s) => s.products);
   const reviews = useStore((s) => s.reviews);
-  const { addToCart, toggleWishlist, wishlist, user, addReview } = useStore();
+  const { addToCart, toggleWishlist, wishlist, user, addReview, recordView } = useStore();
 
   const product = products.find((p) => p.slug === slug);
+
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  useEffect(() => {
+    if (product) recordView(product.id);
+  }, [product?.id]);
+
+  const endOfDay = new Date();
+  endOfDay.setUTCHours(23, 59, 59, 999);
+  const remaining = Math.max(0, endOfDay.getTime() - now);
+  const hh = String(Math.floor(remaining / 3600000)).padStart(2, "0");
+  const mm = String(Math.floor((remaining % 3600000) / 60000)).padStart(2, "0");
+  const ss = String(Math.floor((remaining % 60000) / 1000)).padStart(2, "0");
 
   const [view, setView] = useState(0);
   const [color, setColor] = useState(product?.colors[0]?.name ?? "");
@@ -167,6 +183,15 @@ export default function ProductPage() {
 
           <div className="mt-5 max-w-sm"><StockMeter stock={product.stock} /></div>
 
+          {!out && (
+            <div className="mt-4 inline-flex items-center gap-2.5 glass rounded-full px-4 py-2 border-amber2/30">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber2 anim-pulse-dot" />
+              <span className="text-[10px] font-mono tracking-[0.2em] uppercase text-amber2">
+                Drop 07 closes in <span className="text-white tabular-nums">{hh}:{mm}:{ss}</span>
+              </span>
+            </div>
+          )}
+
           {/* color */}
           <div className="mt-7">
             <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-mist mb-2.5">
@@ -223,7 +248,7 @@ export default function ProductPage() {
           <div className="grid grid-cols-2 gap-px bg-white/8 rounded-xl overflow-hidden mt-8 border hairline">
             {[
               { icon: <IconTruck size={17} />, t: "Free freight over $150" },
-              { icon: <IconShield size={17} />, t: "2-year Nova warranty" },
+              { icon: <IconShield size={17} />, t: "2-year House warranty" },
               { icon: <IconBolt size={17} />, t: "Pairs instantly to grid" },
               { icon: <IconArrow size={17} />, t: "30-day timeline returns" },
             ].map((x) => (

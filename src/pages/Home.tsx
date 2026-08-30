@@ -24,6 +24,11 @@ export default function Home() {
 
   const flagship = products.find((p) => p.id === "p-halo-x1") ?? products[0];
   const trending = [...products].sort((a, b) => b.ratingCount - a.ratingCount);
+  const recentlyViewed = useStore((s) => s.recentlyViewed);
+  const recentlyScanned = recentlyViewed
+    .map((id) => products.find((p) => p.id === id))
+    .filter((p): p is NonNullable<typeof p> => !!p)
+    .slice(0, 4);
 
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
@@ -38,7 +43,7 @@ export default function Home() {
     tiltY.set(((e.clientX - r.left) / r.width - 0.5) * 12);
   };
 
-  const line1 = useScramble("GEAR FROM");
+  const line1 = useScramble("WEAR");
   const line2 = useScramble("THE NEAR FUTURE");
 
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -95,7 +100,7 @@ export default function Home() {
               transition={{ delay: 0.5, duration: 0.6 }}
               className="text-mist text-base md:text-lg leading-relaxed max-w-md mt-6"
             >
-              Hardware that shipped before its time. Levitating audio, holographic wearables,
+              Future-wear and hardware, cut before their time. Levitating audio, haptic couture,
               autonomous machines — tested in orbit, delivered to your door.
             </motion.p>
 
@@ -120,7 +125,7 @@ export default function Home() {
               className="flex flex-wrap gap-x-10 gap-y-4 mt-12"
             >
               {[
-                { v: <Counter to={24} suffix="k+" />, l: "pilots supplied" },
+                { v: <Counter to={24} suffix="k+" />, l: "clients outfitted" },
                 { v: <Counter to={120} suffix="+" />, l: "sectors shipped" },
                 { v: <><Counter to={48} prefix="" suffix="" /><span className="text-neon">/10</span></>, l: "avg. rating ×10" },
               ].map((s) => (
@@ -304,6 +309,27 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      {recentlyScanned.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 md:px-6 pt-20">
+          <Reveal>
+            <SectionHead
+              eyebrow="Your trail"
+              title={<>Recently <span className="text-neon">scanned</span></>}
+              right={
+                <Link to="/shop" className="group flex items-center gap-2 text-sm text-mist hover:text-neon transition-colors">
+                  Back to catalog <IconArrow size={15} className="transition-transform group-hover:translate-x-1" />
+                </Link>
+              }
+            />
+          </Reveal>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {recentlyScanned.map((p, i) => (
+              <ProductCard key={p.id} product={p} index={i} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ============ VALUE STRIP ============ */}
       <section className="max-w-7xl mx-auto px-4 md:px-6 pt-24">

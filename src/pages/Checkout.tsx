@@ -336,7 +336,7 @@ export default function Checkout() {
                             if (PROMO_CODES[c]) {
                               setDiscount(Math.round(subtotal * PROMO_CODES[c]));
                               toast("success", `Code ${c} applied`);
-                            } else toast("error", "Unknown code", "Try NEON10 or NOVA25.");
+                            } else toast("error", "Unknown code", "Try NEON10 or WEARLY25.");
                           }}
                           className="shrink-0 px-4 rounded-md border border-neon/40 text-neon text-xs font-mono uppercase hover:bg-neon/10 transition-colors"
                         >

@@ -96,6 +96,24 @@ export default function CartDrawer() {
                 </div>
 
                 <div className="border-t hairline px-6 py-5 shrink-0 space-y-3 bg-abyss/60">
+                  {subtotal < 150 ? (
+                    <div>
+                      <div className="h-1 bg-white/8 rounded-full overflow-hidden mb-1.5">
+                        <motion.div
+                          animate={{ width: `${Math.min(100, (subtotal / 150) * 100)}%` }}
+                          transition={{ type: "spring", stiffness: 90, damping: 20 }}
+                          className="h-full rounded-full bg-gradient-to-r from-neon to-viol"
+                        />
+                      </div>
+                      <p className="text-[10px] font-mono text-mist">
+                        <span className="text-neon">{fmt(150 - subtotal)}</span> away from free orbital freight
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-[10px] font-mono text-mint flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-mint anim-pulse-dot" /> FREE ORBITAL FREIGHT UNLOCKED
+                    </p>
+                  )}
                   <div className="flex justify-between text-sm">
                     <span className="text-mist">Subtotal</span>
                     <span className="font-mono text-white">{fmt(subtotal)}</span>

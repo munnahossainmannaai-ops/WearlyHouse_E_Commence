@@ -16,6 +16,7 @@ import Checkout from "./pages/Checkout";
 import Auth from "./pages/Auth";
 import Account from "./pages/Account";
 import Wishlist from "./pages/Wishlist";
+import Track from "./pages/Track";
 import Admin from "./pages/Admin";
 
 function ScrollToTop() {
@@ -140,6 +141,7 @@ function Shell() {
               <Route path="/auth" element={<Auth />} />
               <Route path="/account" element={<Account />} />
               <Route path="/wishlist" element={<Wishlist />} />
+              <Route path="/track" element={<Track />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

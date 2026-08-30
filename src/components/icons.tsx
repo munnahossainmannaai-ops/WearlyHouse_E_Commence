@@ -20,7 +20,7 @@ const base = (p: P) => {
 export const IconLogo = (p: P) => (
   <svg {...base(p)} strokeWidth={2}>
     <path d="M12 2 21 7v10l-9 5-9-5V7z" style={{ stroke: "var(--neon)" }} />
-    <path d="M8.5 15.5v-7l7 7v-7" style={{ stroke: "var(--viol)" }} />
+    <path d="M7 9.5l2 7 3-5 3 5 2-7" style={{ stroke: "var(--viol)" }} />
   </svg>
 );
 

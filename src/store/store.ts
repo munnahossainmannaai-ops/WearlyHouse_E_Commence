@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Address, CartItem, Order, OrderStatus, Product, Review, Toast, User } from "../lib/types";
+import type { Address, CartItem, Order, OrderItem, OrderStatus, Product, Review, Toast, User } from "../lib/types";
 import { PRODUCTS, seedReviews } from "../data/catalog";
 import { hashPass, uid } from "../lib/utils";
 
@@ -38,6 +38,9 @@ interface Store {
   removeFromCart: (productId: string, color: string) => void;
   clearCart: () => void;
   toggleWishlist: (productId: string) => void;
+  recentlyViewed: string[];
+  recordView: (productId: string) => void;
+  reorder: (items: OrderItem[]) => void;
 
   placeOrder: (o: {
     address: Address;
@@ -157,6 +160,7 @@ export const useStore = create<Store>()(
       reviews: seedReviews(),
       toasts: [],
       cartOpen: false,
+      recentlyViewed: [],
 
       setCartOpen: (v) => set({ cartOpen: v }),
 
@@ -299,6 +303,27 @@ export const useStore = create<Store>()(
         const p = get().products.find((x) => x.id === productId);
         get().toast(has ? "info" : "success", has ? "Removed from wishlist" : "Saved to wishlist", p?.name);
       },
+      recordView: (productId) =>
+        set((s) => ({
+          recentlyViewed: [productId, ...s.recentlyViewed.filter((id) => id !== productId)].slice(0, 8),
+        })),
+      reorder: (items) => {
+        const products = get().products;
+        let added = 0;
+        set((s) => {
+          const cart = [...s.cart];
+          for (const it of items) {
+            const p = products.find((x) => x.id === it.productId);
+            if (!p || p.stock === 0) continue;
+            const ex = cart.find((c) => c.productId === it.productId && c.color === it.color);
+            if (ex) ex.qty = Math.min(ex.qty + it.qty, p.stock);
+            else cart.push({ productId: it.productId, color: it.color, qty: Math.min(it.qty, p.stock) });
+            added++;
+          }
+          return { cart, cartOpen: added > 0 };
+        });
+        get().toast(added ? "success" : "info", added ? "Manifest reloaded" : "Nothing to reload", added ? `${added} unit${added > 1 ? "s" : ""} back in cargo.` : "Those units are offline.");
+      },
 
       placeOrder: ({ address, shippingMethod, shippingCost, discount, last4 }) => {
         const { cart, products, user } = get();
@@ -387,7 +412,7 @@ export const useStore = create<Store>()(
       },
     }),
     {
-      name: "nova-supply-v1",
+      name: "wearly-house-v1",
       partialize: (s) => ({
         theme: s.theme,
         user: s.user,
@@ -397,6 +422,7 @@ export const useStore = create<Store>()(
         wishlist: s.wishlist,
         orders: s.orders,
         reviews: s.reviews,
+        recentlyViewed: s.recentlyViewed,
       }),
     }
   )

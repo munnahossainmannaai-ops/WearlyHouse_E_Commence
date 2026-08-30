@@ -48,7 +48,7 @@ export default function Auth() {
 
         <div className="relative flex items-center gap-3">
           <IconLogo size={30} />
-          <span className="font-display font-bold tracking-[0.16em] text-white">NOVA<span className="text-neon">//</span>SUPPLY</span>
+          <span className="font-display font-bold tracking-[0.16em] text-white">WEARLY<span className="text-neon">//</span>HOUSE</span>
         </div>
 
         <div className="relative">
@@ -64,7 +64,7 @@ export default function Auth() {
             </div>
           </div>
           <h1 className="font-display text-4xl xl:text-5xl font-bold text-white leading-[1.05] max-w-sm">
-            One key to the <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon to-viol">whole grid.</span>
+            One key. Every drop, <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon to-viol">fitted to you.</span>
           </h1>
           <p className="text-mist mt-4 max-w-sm leading-relaxed">
             Track drops, sync your wishlist across stations, and clear checkout in a single pass.
