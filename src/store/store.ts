@@ -65,6 +65,7 @@ interface Store {
     last4: string;
   }) => Order;
   setOrderStatus: (orderId: string, status: OrderStatus) => void;
+  cancelOrder: (orderId: string) => void;
 
   upsertProduct: (p: Product) => void;
   deleteProduct: (id: string) => void;
@@ -467,6 +468,29 @@ export const useStore = create<Store>()(
         }));
         writeAudit(get, set, "Order status changed", `${orderId} → ${status}`);
         get().toast("success", `Order ${orderId}`, `Status → ${status}`);
+      },
+
+      cancelOrder: (orderId) => {
+        const order = get().orders.find((o) => o.id === orderId);
+        if (!order || order.status !== "processing") return;
+        set((s) => ({
+          orders: s.orders.map((o) =>
+            o.id === orderId
+              ? {
+                  ...o,
+                  status: "cancelled" as OrderStatus,
+                  timeline: [...o.timeline, { status: "cancelled" as OrderStatus, at: Date.now(), note: "Cancelled by operator — refund issued" }],
+                }
+              : o
+          ),
+          // return the reserved units to the shelf
+          products: s.products.map((p) => {
+            const it = order.items.find((i) => i.productId === p.id);
+            return it ? { ...p, stock: p.stock + it.qty } : p;
+          }),
+        }));
+        writeAudit(get, set, "Order cancelled", `${orderId} · refunded to •••• ${order.last4}`);
+        get().toast("info", "Order cancelled", `${orderId} refunded — units returned to stock.`);
       },
 
       upsertProduct: (p) => {
