@@ -113,6 +113,15 @@ export interface Promo {
   code: string;
   pct: number;
   active: boolean;
+  redemptions: number;
+}
+
+export interface AuditEntry {
+  id: string;
+  at: number;
+  actor: string;
+  action: string;
+  detail: string;
 }
 
 export interface RestockRequest {

@@ -160,14 +160,14 @@ export default function Auth() {
           <div className="mt-7 glass rounded-xl p-4">
             <p className="text-[10px] font-mono uppercase tracking-[0.25em] text-mist mb-3">Demo clearances</p>
             <div className="flex gap-2.5">
-              <button onClick={() => { quickLogin("demo@nova.space"); nav(next); }} className="flex-1 py-2.5 rounded-lg border border-neon/35 text-neon text-xs font-mono hover:bg-neon/10 transition-colors">
+              <button onClick={() => { quickLogin("demo@wearly.house"); nav(next); }} className="flex-1 py-2.5 rounded-lg border border-neon/35 text-neon text-xs font-mono hover:bg-neon/10 transition-colors">
                 Customer
               </button>
-              <button onClick={() => { quickLogin("admin@nova.supply"); nav("/admin"); }} className="flex-1 py-2.5 rounded-lg border border-viol/35 text-viol text-xs font-mono hover:bg-viol/10 transition-colors">
+              <button onClick={() => { quickLogin("admin@wearly.house"); nav("/admin"); }} className="flex-1 py-2.5 rounded-lg border border-viol/35 text-viol text-xs font-mono hover:bg-viol/10 transition-colors">
                 Admin
               </button>
             </div>
-            <p className="text-[10px] text-mist/70 mt-2.5 font-mono">admin@nova.supply · nova-admin</p>
+            <p className="text-[10px] text-mist/70 mt-2.5 font-mono">admin@wearly.house · weekly-admin</p>
           </div>
         </motion.div>
       </div>

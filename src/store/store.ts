@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Address, CartItem, Order, OrderItem, OrderStatus, Product, Promo, RestockRequest, Review, Toast, User } from "../lib/types";
+import type { Address, AuditEntry, CartItem, Order, OrderItem, OrderStatus, Product, Promo, RestockRequest, Review, Toast, User } from "../lib/types";
 import { PRODUCTS, seedReviews } from "../data/catalog";
 import { hashPass, uid } from "../lib/utils";
 
@@ -53,6 +53,9 @@ interface Store {
   togglePromo: (code: string) => void;
   restockRequests: RestockRequest[];
   requestRestock: (productId: string, email: string) => void;
+  redeemPromo: (code: string) => void;
+  auditLog: AuditEntry[];
+  toggleUserActive: (id: string) => void;
 
   placeOrder: (o: {
     address: Address;
@@ -74,8 +77,8 @@ const seedUsers: User[] = [
   {
     id: "u-admin",
     name: "House Admin",
-    email: "admin@nova.supply",
-    passHash: hashPass("nova-admin"),
+    email: "admin@wearly.house",
+    passHash: hashPass("wearly-admin"),
     role: "admin",
     addresses: [],
     createdAt: Date.now() - 400 * 86_400_000,
@@ -84,8 +87,8 @@ const seedUsers: User[] = [
   {
     id: "u-demo",
     name: "Kai Demo",
-    email: "demo@nova.space",
-    passHash: hashPass("demo1234"),
+    email: "demo@wearly.house",
+    passHash: hashPass("demo-pass-1"),
     role: "customer",
     addresses: [
       {
@@ -114,7 +117,7 @@ const seedOrders = (): Order[] => {
     {
       id: "WH-DEMO02",
       userId: "u-demo",
-      userEmail: "demo@nova.space",
+      userEmail: "demo@wearly.house",
       items: [{ productId: drone.id, name: drone.name, image: drone.image, color: drone.colors[0].name, qty: 1, price: drone.price }],
       address: addr,
       shippingMethod: "Orbital Express",
@@ -134,7 +137,7 @@ const seedOrders = (): Order[] => {
     {
       id: "WH-DEMO01",
       userId: "u-demo",
-      userEmail: "demo@nova.space",
+      userEmail: "demo@wearly.house",
       items: [
         { productId: halo.id, name: halo.name, image: halo.image, color: halo.colors[0].name, qty: 1, price: halo.price },
         { productId: pods.id, name: pods.name, image: pods.image, color: pods.colors[0].name, qty: 1, price: pods.price },
@@ -158,6 +161,20 @@ const seedOrders = (): Order[] => {
   ];
 };
 
+/* audit helper — used by admin-mutating actions */
+const writeAudit = (
+  get: () => Store,
+  set: (fn: (s: Store) => Partial<Store>) => void,
+  action: string,
+  detail: string
+) =>
+  set((s) => ({
+    auditLog: [
+      { id: uid(), at: Date.now(), actor: get().user?.name ?? "system", action, detail },
+      ...s.auditLog,
+    ].slice(0, 80),
+  }));
+
 export const useStore = create<Store>()(
   persist(
     (set, get) => ({
@@ -177,14 +194,23 @@ export const useStore = create<Store>()(
       freeShipThreshold: 150,
       lowStockThreshold: 5,
       promos: [
-        { code: "NEON10", pct: 10, active: true },
-        { code: "WEARLY25", pct: 25, active: true },
+        { code: "NEON10", pct: 10, active: true, redemptions: 41 },
+        { code: "WEARLY25", pct: 25, active: true, redemptions: 17 },
       ],
       restockRequests: [],
+      auditLog: [],
 
       setCartOpen: (v) => set({ cartOpen: v }),
-      setFreeShipThreshold: (n) => set({ freeShipThreshold: Math.max(0, n) }),
-      setLowStockThreshold: (n) => set({ lowStockThreshold: Math.min(30, Math.max(1, n)) }),
+      setFreeShipThreshold: (n) => {
+        const v = Math.max(0, n);
+        set({ freeShipThreshold: v });
+        writeAudit(get, set, "Freight rule updated", `Free-freight threshold → $${v}`);
+      },
+      setLowStockThreshold: (n) => {
+        const v = Math.min(30, Math.max(1, n));
+        set({ lowStockThreshold: v });
+        writeAudit(get, set, "Inventory rule updated", `Low-stock alert level → ${v}`);
+      },
 
       toast: (kind, title, message) => {
         const id = uid();
@@ -225,6 +251,13 @@ export const useStore = create<Store>()(
           set({ user: u });
           get().toast("success", `Signed in as ${u.name}`, "Demo session.");
         }
+      },
+      toggleUserActive: (id) => {
+        const target = get().users.find((u) => u.id === id);
+        if (!target) return;
+        set((s) => ({ users: s.users.map((x) => (x.id === id ? { ...x, active: !x.active } : x)) }));
+        writeAudit(get, set, target.active ? "Operator suspended" : "Operator reinstated", `${target.name} · ${target.email}`);
+        get().toast("info", target.active ? "Operator suspended" : "Operator reinstated", target.name);
       },
       googleLogin: () => {
         const email = "traveler@gmail.com";
@@ -353,16 +386,25 @@ export const useStore = create<Store>()(
         if (!/^[A-Z0-9]{3,12}$/.test(c)) return "Code must be 3–12 letters/digits.";
         if (get().promos.some((p) => p.code === c)) return "That code is already deployed.";
         if (!(pct >= 1 && pct <= 90)) return "Discount must be between 1 and 90%.";
-        set((s) => ({ promos: [...s.promos, { code: c, pct, active: true }] }));
+        set((s) => ({ promos: [...s.promos, { code: c, pct, active: true, redemptions: 0 }] }));
+        writeAudit(get, set, "Promo deployed", `${c} · -${pct}%`);
         get().toast("success", `Code ${c} deployed`, `-${pct}% at checkout.`);
         return null;
       },
       removePromo: (code) => {
         set((s) => ({ promos: s.promos.filter((p) => p.code !== code) }));
+        writeAudit(get, set, "Promo revoked", code);
         get().toast("info", `Code ${code} revoked`);
       },
-      togglePromo: (code) =>
-        set((s) => ({ promos: s.promos.map((p) => (p.code === code ? { ...p, active: !p.active } : p)) })),
+      togglePromo: (code) => {
+        const next = !get().promos.find((p) => p.code === code)?.active;
+        set((s) => ({ promos: s.promos.map((p) => (p.code === code ? { ...p, active: !p.active } : p)) }));
+        writeAudit(get, set, next ? "Promo enabled" : "Promo disabled", code);
+      },
+      redeemPromo: (code) =>
+        set((s) => ({
+          promos: s.promos.map((p) => (p.code === code ? { ...p, redemptions: p.redemptions + 1 } : p)),
+        })),
       requestRestock: (productId, email) => {
         const e = email.trim().toLowerCase();
         if (get().restockRequests.some((r) => r.productId === productId && r.email === e)) {
@@ -423,6 +465,7 @@ export const useStore = create<Store>()(
               : o
           ),
         }));
+        writeAudit(get, set, "Order status changed", `${orderId} → ${status}`);
         get().toast("success", `Order ${orderId}`, `Status → ${status}`);
       },
 
@@ -431,6 +474,7 @@ export const useStore = create<Store>()(
         set((s) => ({
           products: exists ? s.products.map((x) => (x.id === p.id ? p : x)) : [p, ...s.products],
         }));
+        writeAudit(get, set, exists ? "Product updated" : "Product deployed", `${p.name} · ${p.category}`);
         get().toast("success", exists ? "Product updated" : "Product created", p.name);
       },
       deleteProduct: (id) => {
@@ -440,6 +484,7 @@ export const useStore = create<Store>()(
           cart: s.cart.filter((c) => c.productId !== id),
           wishlist: s.wishlist.filter((w) => w !== id),
         }));
+        writeAudit(get, set, "Product decommissioned", p?.name ?? id);
         get().toast("info", "Product deleted", p?.name);
       },
       setStock: (id, stock) =>
@@ -477,6 +522,7 @@ export const useStore = create<Store>()(
         lowStockThreshold: s.lowStockThreshold,
         promos: s.promos,
         restockRequests: s.restockRequests,
+        auditLog: s.auditLog,
       }),
     }
   )

@@ -8,7 +8,7 @@ import { SHIPPING_METHODS } from "../data/catalog";
 import { IconArrow, IconCart, IconCheck, IconTrash } from "../components/icons";
 
 export default function CartPage() {
-  const { cart, products, setQty, removeFromCart, clearCart, promos, freeShipThreshold } = useStore();
+  const { cart, products, setQty, removeFromCart, clearCart, promos, freeShipThreshold, redeemPromo } = useStore();
   const toast = useStore((s) => s.toast);
   const nav = useNavigate();
   const activePromos = promos.filter((p) => p.active);
@@ -33,6 +33,7 @@ export default function CartPage() {
     if (found) {
       setApplied(code);
       setPromoErr("");
+      redeemPromo(code);
       toast("success", `Code ${code} locked in`, `-${found.pct}% on hardware.`);
     } else {
       setPromoErr("Unknown code. Try NEON10.");

@@ -162,7 +162,7 @@ export default function Admin() {
   const {
     user, users, products, orders, upsertProduct, deleteProduct, setStock, setOrderStatus, toast,
     freeShipThreshold, setFreeShipThreshold, lowStockThreshold, setLowStockThreshold,
-    promos, addPromo, removePromo, togglePromo, restockRequests,
+    promos, addPromo, removePromo, togglePromo, restockRequests, views, auditLog, toggleUserActive,
   } = useStore();
   const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("overview");
   const [editProduct, setEditProduct] = useState<Product | null>(null);
@@ -177,6 +177,7 @@ export default function Admin() {
   const [newCode, setNewCode] = useState("");
   const [newPct, setNewPct] = useState(10);
   const [promoErr, setPromoErr] = useState("");
+  const [importText, setImportText] = useState("");
   const [clock, setClock] = useState("");
 
   useEffect(() => {
@@ -191,6 +192,43 @@ export default function Admin() {
   const lowStock = useMemo(() => products.filter((p) => p.stock <= threshold).sort((a, b) => a.stock - b.stock), [products, threshold]);
   const stockValue = useMemo(() => products.reduce((a, p) => a + p.price * p.stock, 0), [products]);
   const totalUnits = useMemo(() => products.reduce((a, p) => a + p.stock, 0), [products]);
+
+  /* ---------- signal intelligence ---------- */
+  const topViewed = useMemo(
+    () =>
+      [...products]
+        .map((p) => {
+          const v = views[p.id] ?? 0;
+          const bought = orders.filter((o) => o.status !== "cancelled" && o.items.some((i) => i.productId === p.id)).length;
+          return { p, v, conv: v > 0 ? Math.round((bought / v) * 1000) / 10 : 0 };
+        })
+        .sort((a, b) => b.v - a.v)
+        .slice(0, 5),
+    [products, views, orders]
+  );
+  const maxViews = Math.max(...topViewed.map((t) => t.v), 1);
+
+  const promoPerf = useMemo(() => {
+    const totalRedemptions = promos.reduce((a, p) => a + p.redemptions, 0);
+    return { list: [...promos].sort((a, b) => b.redemptions - a.redemptions), totalRedemptions };
+  }, [promos]);
+  const maxRedemptions = Math.max(...promos.map((p) => p.redemptions), 1);
+
+  const selloutForecast = useMemo(() => {
+    const cutoff = Date.now() - 30 * 86_400_000;
+    return products
+      .map((p) => {
+        const sold = orders
+          .filter((o) => o.status !== "cancelled" && o.createdAt >= cutoff)
+          .reduce((a, o) => a + o.items.filter((i) => i.productId === p.id).reduce((b, i) => b + i.qty, 0), 0);
+        const rate = sold / 30;
+        const days = rate > 0 ? Math.round(p.stock / rate) : Infinity;
+        return { p, sold, days };
+      })
+      .filter((x) => x.days !== Infinity)
+      .sort((a, b) => a.days - b.days)
+      .slice(0, 5);
+  }, [products, orders]);
 
   const chart = useMemo(() => {
     const n = range === 90 ? 13 : range;
@@ -528,6 +566,104 @@ export default function Admin() {
               )}
             </div>
           </div>
+
+          {/* signal intelligence */}
+          <Reveal>
+            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-mist mb-3 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-viol anim-pulse-dot" /> Signal intelligence · live from storefront
+            </p>
+          </Reveal>
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* top viewed */}
+            <Reveal delay={0.05}>
+              <div className="glass rounded-2xl p-6 h-full">
+                <h3 className="font-display font-bold text-white mb-1 flex items-center gap-2"><IconEye size={16} className="text-neon" /> Most scanned units</h3>
+                <p className="text-[11px] text-mist mb-4">Product-page views and view→order conversion.</p>
+                <div className="space-y-3">
+                  {topViewed.map((t, i) => (
+                    <div key={t.p.id} className="flex items-center gap-3">
+                      <span className="font-mono text-[10px] text-mist w-4">{String(i + 1).padStart(2, "0")}</span>
+                      <img src={t.p.image} alt="" className="w-9 h-9 rounded-md object-cover border hairline" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-baseline mb-1">
+                          <p className="text-xs text-white font-medium truncate pr-2">{t.p.name}</p>
+                          <span className="font-mono text-[10px] text-neon shrink-0">{t.v.toLocaleString()} views</span>
+                        </div>
+                        <div className="h-1 bg-white/6 rounded-full overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            whileInView={{ width: `${(t.v / maxViews) * 100}%` }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.8, delay: i * 0.06 }}
+                            className="h-full rounded-full bg-gradient-to-r from-neon to-viol"
+                          />
+                        </div>
+                      </div>
+                      <span className="font-mono text-[10px] text-mist w-12 text-right shrink-0">{t.conv}% conv</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Reveal>
+
+            {/* promo performance */}
+            <Reveal delay={0.1}>
+              <div className="glass rounded-2xl p-6 h-full">
+                <h3 className="font-display font-bold text-white mb-1 flex items-center gap-2"><IconBolt size={16} className="text-amber2" /> Promo performance</h3>
+                <p className="text-[11px] text-mist mb-4">{promoPerf.totalRedemptions} total redemptions across live codes.</p>
+                <div className="space-y-3">
+                  {promoPerf.list.map((c, i) => (
+                    <div key={c.code} className="flex items-center gap-3">
+                      <span className={cx("font-mono text-xs px-2 py-1 rounded border w-24 text-center shrink-0", c.active ? "text-mint border-mint/30 bg-mint/8" : "text-mist border-white/10 line-through")}>{c.code}</span>
+                      <div className="flex-1">
+                        <div className="h-1.5 bg-white/6 rounded-full overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            whileInView={{ width: `${(c.redemptions / maxRedemptions) * 100}%` }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.8, delay: i * 0.06 }}
+                            className="h-full rounded-full bg-gradient-to-r from-amber2 to-rose2"
+                          />
+                        </div>
+                      </div>
+                      <span className="font-mono text-[11px] text-white w-14 text-right shrink-0">{c.redemptions}×</span>
+                      <span className="font-mono text-[10px] text-mist w-10 text-right shrink-0">-{c.pct}%</span>
+                    </div>
+                  ))}
+                  {promoPerf.list.length === 0 && <p className="text-sm text-mist">No codes deployed.</p>}
+                </div>
+              </div>
+            </Reveal>
+
+            {/* sell-out forecast */}
+            <Reveal delay={0.15}>
+              <div className="glass rounded-2xl p-6 h-full">
+                <h3 className="font-display font-bold text-white mb-1 flex items-center gap-2"><IconAlert size={16} className="text-rose2" /> Sell-out forecast</h3>
+                <p className="text-[11px] text-mist mb-4">Days until stockout at the current 30-day sell-through rate.</p>
+                {selloutForecast.length === 0 ? (
+                  <p className="text-sm text-mint flex items-center gap-2"><IconCheck size={14} /> No units trending toward stockout.</p>
+                ) : (
+                  <div className="space-y-2.5">
+                    {selloutForecast.map((f) => {
+                      const urgent = f.days <= 14;
+                      return (
+                        <div key={f.p.id} className="flex items-center gap-3 bg-white/[0.03] rounded-xl p-3">
+                          <img src={f.p.image} alt="" className="w-10 h-10 rounded-lg object-cover border hairline" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-white font-medium truncate">{f.p.name}</p>
+                            <p className="text-[10px] font-mono text-mist">{f.sold} sold / 30d · {f.p.stock} on hand</p>
+                          </div>
+                          <span className={cx("px-2.5 py-1 rounded-full text-[10px] font-mono border shrink-0", urgent ? "text-rose2 border-rose2/40 bg-rose2/10" : "text-amber2 border-amber2/40 bg-amber2/10")}>
+                            ~{f.days}d
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </Reveal>
+          </div>
         </div>
       )}
 
@@ -769,9 +905,7 @@ export default function Admin() {
                         <span className={cx("text-[10px] font-mono uppercase", u.active ? "text-mint" : "text-rose2")}>{u.active ? "Active" : "Suspended"}</span>
                         <span
                           onClick={() => {
-                            if (!self) useStore.setState((s) => ({
-                              users: s.users.map((x) => (x.id === u.id ? { ...x, active: !x.active } : x)),
-                            }));
+                            if (!self) toggleUserActive(u.id);
                           }}
                           role="switch"
                           aria-checked={u.active}
@@ -919,6 +1053,81 @@ export default function Admin() {
               )}
             </div>
           </Reveal>
+
+          <div className="grid lg:grid-cols-2 gap-6">
+            {/* audit log */}
+            <Reveal delay={0.05}>
+              <div className="glass rounded-2xl p-6 h-full">
+                <h3 className="font-display font-bold text-white flex items-center gap-2.5">
+                  <IconSettings size={16} className="text-viol" /> System log
+                </h3>
+                <p className="text-xs text-mist mt-1 mb-4">Every rule change, deployment and status flip — newest first.</p>
+                {auditLog.length === 0 ? (
+                  <p className="text-sm text-mint flex items-center gap-2"><IconCheck size={14} /> No mutations recorded this session yet.</p>
+                ) : (
+                  <div className="space-y-2 max-h-80 overflow-y-auto no-scrollbar pr-1">
+                    {auditLog.map((a) => (
+                      <div key={a.id} className="flex items-start gap-3 bg-white/[0.03] rounded-lg px-3.5 py-2.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-viol mt-1.5 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-white font-medium">{a.action} <span className="text-mist font-normal">· {a.detail}</span></p>
+                          <p className="text-[10px] font-mono text-mist mt-0.5">{a.actor} · {timeAgo(a.at)}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Reveal>
+
+            {/* promo bulk tools */}
+            <Reveal delay={0.1}>
+              <div className="glass rounded-2xl p-6 h-full">
+                <h3 className="font-display font-bold text-white flex items-center gap-2.5">
+                  <IconBolt size={16} className="text-neon" /> Bulk promo tools
+                </h3>
+                <p className="text-xs text-mist mt-1 mb-4">Export the live code sheet, or paste codes to deploy in one pass.</p>
+                <button
+                  onClick={() => {
+                    const csv = "code,pct,active,redemptions\n" + promos.map((p) => `${p.code},${p.pct},${p.active},${p.redemptions}`).join("\n");
+                    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = "wearly-promos.csv";
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    toast("success", "Promo sheet exported", "wearly-promos.csv");
+                  }}
+                  className="w-full py-2.5 rounded-md border border-neon/40 text-neon text-xs font-mono uppercase tracking-wider hover:bg-neon/10 transition-colors flex items-center justify-center gap-2"
+                >
+                  <IconDownload size={14} /> Export CSV
+                </button>
+                <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-mist mt-5 mb-2">Import · one per line: CODE 15</p>
+                <textarea
+                  value={importText}
+                  onChange={(e) => setImportText(e.target.value)}
+                  rows={4}
+                  placeholder={"SPRING20 20\nVIP50 50"}
+                  className={cx(inputCls(), "resize-none font-mono text-xs uppercase")}
+                />
+                <button
+                  onClick={() => {
+                    const lines = importText.split("\n").map((l) => l.trim()).filter(Boolean);
+                    let ok = 0;
+                    for (const line of lines) {
+                      const [code, pct] = line.split(/[\s,;:]+/);
+                      if (code && !addPromo(code, Number(pct) || 10)) ok++;
+                    }
+                    setImportText("");
+                    toast(ok ? "success" : "error", `${ok} code${ok === 1 ? "" : "s"} deployed`, ok ? "Available at checkout immediately." : "Use the format: CODE 15");
+                  }}
+                  className="w-full mt-2.5 py-2.5 rounded-md bg-gradient-to-r from-neon to-viol text-void text-xs font-display font-semibold clip-notch"
+                >
+                  Deploy codes
+                </button>
+              </div>
+            </Reveal>
+          </div>
         </div>
       )}
 

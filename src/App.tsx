@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { HashRouter, Routes, Route, useLocation, useNavigate, useParams } from "react-router-dom";
 import { AnimatePresence, MotionConfig, motion, useScroll, useSpring } from "framer-motion";
 import Navbar from "./components/Navbar";
@@ -12,12 +12,14 @@ import Home from "./pages/Home";
 import Catalog from "./pages/Catalog";
 import ProductPage from "./pages/Product";
 import CartPage from "./pages/Cart";
-import Checkout from "./pages/Checkout";
 import Auth from "./pages/Auth";
 import Account from "./pages/Account";
 import Wishlist from "./pages/Wishlist";
-import Track from "./pages/Track";
-import Admin from "./pages/Admin";
+
+/* code-split: heavier / less-visited routes load on demand */
+const Checkout = lazy(() => import("./pages/Checkout"));
+const Track = lazy(() => import("./pages/Track"));
+const Admin = lazy(() => import("./pages/Admin"));
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -132,6 +134,7 @@ function Shell() {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
           >
+            <Suspense fallback={null}>
             <Routes location={location}>
               <Route path="/" element={<Home />} />
               <Route path="/shop" element={<Catalog />} />
@@ -145,6 +148,7 @@ function Shell() {
               <Route path="/admin" element={<Admin />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </Suspense>
           </motion.div>
         </AnimatePresence>
       </main>

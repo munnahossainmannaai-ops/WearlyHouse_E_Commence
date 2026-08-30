@@ -11,7 +11,7 @@ import { IconArrow, IconCard, IconCheck, IconChevron, IconPin, IconStripe, IconT
 const STEPS = ["Address", "Shipping", "Payment"];
 
 export default function Checkout() {
-  const { cart, products, user, placeOrder, saveAddress, promos, freeShipThreshold } = useStore();
+  const { cart, products, user, placeOrder, saveAddress, promos, freeShipThreshold, redeemPromo } = useStore();
   const toast = useStore((s) => s.toast);
   const activePromos = promos.filter((p) => p.active);
   const nav = useNavigate();
@@ -337,6 +337,7 @@ export default function Checkout() {
                             const found = activePromos.find((p) => p.code === c);
                             if (found) {
                               setDiscount(Math.round(subtotal * (found.pct / 100)));
+                              redeemPromo(c);
                               toast("success", `Code ${c} applied`, `-${found.pct}% locked in.`);
                             } else toast("error", "Unknown code", "Try NEON10 or WEARLY25.");
                           }}

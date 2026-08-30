@@ -176,7 +176,7 @@ export default function Navbar() {
               <ThemeSwitch />
             </div>
             <button
-              onClick={() => window.dispatchEvent(new Event("nova:palette"))}
+              onClick={() => window.dispatchEvent(new Event("wearly:palette"))}
               aria-label="Open command console"
               className="hidden md:flex items-center gap-2 mr-1.5 pl-3 pr-2 h-9 rounded-full glass text-mist hover:text-neon hover:border-neon/45 transition-all duration-300 group"
             >

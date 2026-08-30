@@ -33,10 +33,10 @@ export default function CommandPalette() {
     };
     const onEvt = () => setOpen(true);
     window.addEventListener("keydown", onKey);
-    window.addEventListener("nova:palette", onEvt);
+    window.addEventListener("wearly:palette", onEvt);
     return () => {
       window.removeEventListener("keydown", onKey);
-      window.removeEventListener("nova:palette", onEvt);
+      window.removeEventListener("wearly:palette", onEvt);
     };
   }, []);
 
@@ -203,7 +203,7 @@ export default function CommandPalette() {
                   <kbd className="border border-white/12 rounded px-1 py-px text-mist">{k}</kbd> {l}
                 </span>
               ))}
-              <span className="ml-auto text-[10px] font-mono tracking-[0.25em] uppercase text-neon/60">nova//console</span>
+              <span className="ml-auto text-[10px] font-mono tracking-[0.25em] uppercase text-neon/60">wearly//console</span>
             </div>
           </motion.div>
         </motion.div>
