@@ -84,6 +84,8 @@ export interface Order {
   status: OrderStatus;
   timeline: OrderTimelineEntry[];
   createdAt: number;
+  creditsUsed?: number;
+  creditsEarned?: number;
 }
 
 export interface Review {
@@ -94,6 +96,7 @@ export interface Review {
   title: string;
   body: string;
   date: number;
+  helpful?: number;
 }
 
 export interface Toast {

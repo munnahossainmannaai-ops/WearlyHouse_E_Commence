@@ -57,12 +57,19 @@ interface Store {
   auditLog: AuditEntry[];
   toggleUserActive: (id: string) => void;
 
+  compare: string[];
+  toggleCompare: (productId: string) => void;
+  clearCompare: () => void;
+  creditBalances: Record<string, number>;
+  voteHelpful: (reviewId: string) => void;
+
   placeOrder: (o: {
     address: Address;
     shippingMethod: string;
     shippingCost: number;
     discount: number;
     last4: string;
+    creditsUsed?: number;
   }) => Order;
   setOrderStatus: (orderId: string, status: OrderStatus) => void;
   cancelOrder: (orderId: string) => void;
@@ -200,6 +207,8 @@ export const useStore = create<Store>()(
       ],
       restockRequests: [],
       auditLog: [],
+      compare: [],
+      creditBalances: { "u-demo": 128 },
 
       setCartOpen: (v) => set({ cartOpen: v }),
       setFreeShipThreshold: (n) => {
@@ -417,13 +426,17 @@ export const useStore = create<Store>()(
         get().toast("success", "Restock ping queued", `We'll signal ${e} when ${p?.name ?? "it"} is back.`);
       },
 
-      placeOrder: ({ address, shippingMethod, shippingCost, discount, last4 }) => {
-        const { cart, products, user } = get();
+      placeOrder: ({ address, shippingMethod, shippingCost, discount, last4, creditsUsed }) => {
+        const { cart, products, user, creditBalances } = get();
         const items = cart.flatMap((c) => {
           const p = products.find((x) => x.id === c.productId);
           return p ? [{ productId: p.id, name: p.name, image: p.image, color: c.color, qty: c.qty, price: p.price }] : [];
         });
         const subtotal = items.reduce((a, i) => a + i.price * i.qty, 0);
+        const balance = user ? creditBalances[user.id] ?? 0 : 0;
+        const used = user ? Math.max(0, Math.min(creditsUsed ?? 0, balance, Math.max(0, subtotal - discount))) : 0;
+        const total = Math.max(0, subtotal - discount - used) + shippingCost;
+        const earned = Math.max(1, Math.round(total * 0.05));
         const order: Order = {
           id: `WH-${Date.now().toString(36).toUpperCase()}`,
           userId: user?.id ?? "guest",
@@ -434,11 +447,13 @@ export const useStore = create<Store>()(
           shippingCost,
           discount,
           subtotal,
-          total: Math.max(0, subtotal - discount) + shippingCost,
+          total,
           last4,
           status: "processing",
           timeline: [{ status: "placed", at: Date.now(), note: "Order received — payment authorized" }],
           createdAt: Date.now(),
+          creditsUsed: used || undefined,
+          creditsEarned: earned,
         };
         set((s) => ({
           orders: [order, ...s.orders],
@@ -447,9 +462,33 @@ export const useStore = create<Store>()(
             const bought = items.filter((i) => i.productId === p.id).reduce((a, i) => a + i.qty, 0);
             return bought ? { ...p, stock: Math.max(0, p.stock - bought) } : p;
           }),
+          creditBalances: user
+            ? { ...s.creditBalances, [user.id]: Math.max(0, (s.creditBalances[user.id] ?? 0) - used) + earned }
+            : s.creditBalances,
         }));
         return order;
       },
+
+      toggleCompare: (productId) => {
+        const { compare, products } = get();
+        if (compare.includes(productId)) {
+          set({ compare: compare.filter((id) => id !== productId) });
+          return;
+        }
+        if (compare.length >= 3) {
+          get().toast("info", "Compare tray is full", "Remove a unit to swap it out — three max.");
+          return;
+        }
+        set({ compare: [...compare, productId] });
+        const p = products.find((x) => x.id === productId);
+        get().toast("success", "Added to compare", p?.name);
+      },
+      clearCompare: () => set({ compare: [] }),
+      voteHelpful: (reviewId) =>
+        set((s) => ({
+          reviews: s.reviews.map((r) => (r.id === reviewId ? { ...r, helpful: (r.helpful ?? 0) + 1 } : r)),
+        })),
+
       setOrderStatus: (orderId, status) => {
         const note =
           status === "processing"
@@ -547,6 +586,8 @@ export const useStore = create<Store>()(
         promos: s.promos,
         restockRequests: s.restockRequests,
         auditLog: s.auditLog,
+        compare: s.compare,
+        creditBalances: s.creditBalances,
       }),
     }
   )

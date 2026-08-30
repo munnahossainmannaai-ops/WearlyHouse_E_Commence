@@ -187,6 +187,28 @@ export const IconChart = (p: P) => (
   </svg>
 );
 
+export const IconCompare = (p: P) => (
+  <svg {...base(p)}>
+    <rect x="3.5" y="5" width="7" height="14" rx="1.6" />
+    <rect x="13.5" y="5" width="7" height="14" rx="1.6" strokeDasharray="2.5 2.5" />
+    <path d="M12 2.8v18.4" strokeDasharray="1.5 2.5" />
+  </svg>
+);
+
+export const IconThumb = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M7 10.5v9.5H4.5a1 1 0 0 1-1-1v-7.5a1 1 0 0 1 1-1z" />
+    <path d="M7 10.5 11.5 3.5a1.9 1.9 0 0 1 2 2.3l-.9 3.7h4.9a2 2 0 0 1 2 2.4l-1.2 6a2 2 0 0 1-2 1.6H7" />
+  </svg>
+);
+
+export const IconCoin = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M12 3 20 7.5v9L12 21l-8-4.5v-9z" />
+    <path d="M9.4 14.2a3 3 0 1 1 0-4.4M12 8.4v1M12 14.6v1" />
+  </svg>
+);
+
 export const IconDownload = (p: P) => (
   <svg {...base(p)}>
     <path d="M12 3.5v11M7.5 10 12 14.5 16.5 10" />

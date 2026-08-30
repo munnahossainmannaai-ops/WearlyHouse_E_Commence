@@ -21,15 +21,16 @@ export default function Catalog() {
   const [params, setParams] = useSearchParams();
   const [layout, setLayout] = useState<"grid" | "list">("grid");
   const [sort, setSort] = useState("featured");
-  const [price, setPrice] = useState<[number, number]>([0, 1500]);
+  const [price, setPrice] = useState<[number, number]>([0, 2000]);
   const [inStockOnly, setInStockOnly] = useState(false);
   const [saleOnly, setSaleOnly] = useState(false);
+  const [minRating, setMinRating] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const q = params.get("q") ?? "";
   const cat = params.get("cat") ?? "all";
 
-  const PRICE_MAX = 1500;
+  const PRICE_MAX = 2000;
 
   const setParam = (key: string, value: string | null) => {
     const next = new URLSearchParams(params);
@@ -45,6 +46,7 @@ export default function Catalog() {
       if (p.price < price[0] || p.price > price[1]) return false;
       if (inStockOnly && p.stock === 0) return false;
       if (saleOnly && !p.compareAt) return false;
+      if (minRating && p.rating < minRating) return false;
       return true;
     });
     switch (sort) {
@@ -55,15 +57,16 @@ export default function Catalog() {
       default: list = [...list].sort((a, b) => Number(b.featured ?? false) - Number(a.featured ?? false) || b.ratingCount - a.ratingCount);
     }
     return list;
-  }, [products, cat, q, price, inStockOnly, saleOnly, sort]);
+  }, [products, cat, q, price, inStockOnly, saleOnly, minRating, sort]);
 
-  const activeFilters = (cat !== "all" ? 1 : 0) + (q ? 1 : 0) + (price[0] > 0 || price[1] < PRICE_MAX ? 1 : 0) + (inStockOnly ? 1 : 0) + (saleOnly ? 1 : 0);
+  const activeFilters = (cat !== "all" ? 1 : 0) + (q ? 1 : 0) + (price[0] > 0 || price[1] < PRICE_MAX ? 1 : 0) + (inStockOnly ? 1 : 0) + (saleOnly ? 1 : 0) + (minRating ? 1 : 0);
 
   const clearAll = () => {
     setParams(new URLSearchParams(), { replace: true });
     setPrice([0, PRICE_MAX]);
     setInStockOnly(false);
     setSaleOnly(false);
+    setMinRating(0);
   };
 
   const FilterPanel = (
@@ -89,6 +92,25 @@ export default function Catalog() {
               </button>
             );
           })}
+        </div>
+      </div>
+
+      {/* rating */}
+      <div>
+        <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-mist mb-3">Minimum rating</p>
+        <div className="flex gap-2">
+          {[{ v: 0, l: "Any" }, { v: 4, l: "4.0+" }, { v: 4.5, l: "4.5+" }].map((r) => (
+            <button
+              key={r.v}
+              onClick={() => setMinRating(r.v)}
+              className={cx(
+                "flex-1 py-2 rounded-lg text-xs font-mono border transition-all",
+                minRating === r.v ? "border-neon/50 text-neon bg-neon/10" : "border-white/10 text-mist hover:text-white"
+              )}
+            >
+              {r.l}
+            </button>
+          ))}
         </div>
       </div>
 
