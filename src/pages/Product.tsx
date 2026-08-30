@@ -5,7 +5,7 @@ import { useStore } from "../store/store";
 import { cx, fmt, dateFmt } from "../lib/utils";
 import ProductCard from "../components/ProductCard";
 import { NeonButton, QtyStepper, Reveal, Stars, StockMeter, Tag, Field, inputCls, SectionHead } from "../components/ui";
-import { IconArrow, IconCart, IconCheck, IconChevron, IconHeart, IconShield, IconStar, IconTruck, IconZoom, IconBolt } from "../components/icons";
+import { IconArrow, IconCart, IconCheck, IconChevron, IconCompare, IconHeart, IconShield, IconStar, IconThumb, IconTruck, IconZoom, IconBolt } from "../components/icons";
 
 const VIEWS = [
   { label: "Unit", pos: "center", scale: 1 },
@@ -18,9 +18,10 @@ export default function ProductPage() {
   const nav = useNavigate();
   const products = useStore((s) => s.products);
   const reviews = useStore((s) => s.reviews);
-  const { addToCart, toggleWishlist, wishlist, user, addReview, recordView, requestRestock, freeShipThreshold } = useStore();
+  const { addToCart, toggleWishlist, wishlist, user, addReview, recordView, requestRestock, freeShipThreshold, toggleCompare, compare, voteHelpful } = useStore();
 
   const product = products.find((p) => p.slug === slug);
+  const compared = product ? compare.includes(product.id) : false;
 
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -72,6 +73,15 @@ export default function ProductPage() {
   const out = product.stock === 0;
   const related = products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4);
   const fallbackRelated = related.length ? related : products.filter((p) => p.id !== product.id).slice(0, 4);
+
+  const bundle = (() => {
+    const sameCat = products.filter((p) => p.category === product.category && p.id !== product.id && p.stock > 0);
+    const others = products
+      .filter((p) => p.category !== product.category && p.id !== product.id && p.stock > 0)
+      .sort((a, b) => b.ratingCount - a.ratingCount);
+    return [...sameCat, ...others].slice(0, 2);
+  })();
+  const bundleTotal = bundle.reduce((a, p) => a + p.price, 0) + (product.stock > 0 ? product.price : 0);
 
   const dist = [5, 4, 3, 2, 1].map((star) => {
     const n = prodReviews.filter((r) => r.rating === star).length;
@@ -235,6 +245,18 @@ export default function ProductPage() {
             >
               <IconHeart size={19} filled={wished} />
             </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.85 }}
+              onClick={() => toggleCompare(product.id)}
+              aria-label="Toggle compare"
+              title="Add to compare tray"
+              className={cx(
+                "w-12 h-12 glass rounded-lg flex items-center justify-center transition-all",
+                compared ? "text-neon border-neon/60 shadow-[0_0_16px_-4px_rgba(45,226,255,0.6)]" : "text-mist hover:text-neon"
+              )}
+            >
+              <IconCompare size={19} />
+            </motion.button>
           </div>
           {!out && (
             <NeonButton
@@ -292,6 +314,44 @@ export default function ProductPage() {
               </div>
             ))}
           </div>
+
+          {/* bundle */}
+          {bundle.length === 2 && (
+            <div className="glass rounded-xl p-5 mt-6">
+              <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-viol mb-4 flex items-center gap-2">
+                <IconBolt size={13} /> Field kit — pairs with this unit
+              </p>
+              <div className="flex items-center gap-3 flex-wrap">
+                {product.stock > 0 && (
+                  <img src={product.image} alt="" className="w-14 h-14 rounded-lg object-cover border hairline opacity-90" />
+                )}
+                {bundle.map((b) => (
+                  <div key={b.id} className="flex items-center gap-2.5">
+                    <span className="text-mist font-mono text-lg">+</span>
+                    <Link to={`/product/${b.slug}`} className="group flex items-center gap-2.5">
+                      <img src={b.image} alt={b.name} className="w-14 h-14 rounded-lg object-cover border hairline group-hover:border-neon/50 transition-colors" />
+                      <span className="hidden sm:block max-w-[110px]">
+                        <span className="block text-xs text-white font-medium leading-tight group-hover:text-neon transition-colors">{b.name}</span>
+                        <span className="block font-mono text-[11px] text-mist mt-0.5">{fmt(b.price)}</span>
+                      </span>
+                    </Link>
+                  </div>
+                ))}
+                <div className="ml-auto text-right">
+                  <p className="font-mono text-lg text-white">{fmt(bundleTotal)}</p>
+                  <button
+                    onClick={() => {
+                      if (product.stock > 0) addToCart(product.id, color, 1);
+                      bundle.forEach((b) => addToCart(b.id, b.colors[0].name, 1));
+                    }}
+                    className="mt-1.5 px-4 py-2 text-xs font-display font-semibold clip-notch bg-gradient-to-r from-neon to-viol text-void hover:shadow-[0_0_24px_-6px_rgba(45,226,255,0.7)] transition-shadow"
+                  >
+                    Add all {product.stock > 0 ? 3 : 2} to cargo
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* description + specs */}
           <div className="mt-8 space-y-3">
@@ -384,6 +444,17 @@ export default function ProductPage() {
                   </div>
                   <h4 className="font-display font-semibold text-white mt-3.5">{r.title}</h4>
                   <p className="text-sm text-mist leading-relaxed mt-1.5">{r.body}</p>
+                  <div className="mt-3.5 pt-3 border-t hairline flex items-center gap-2">
+                    <button
+                      onClick={() => voteHelpful(r.id)}
+                      className="flex items-center gap-1.5 text-[11px] font-mono text-mist hover:text-neon transition-colors"
+                    >
+                      <IconThumb size={13} /> Helpful
+                    </button>
+                    {(r.helpful ?? 0) > 0 && (
+                      <span className="text-[11px] font-mono text-neon/80 tabular-nums">· {r.helpful}</span>
+                    )}
+                  </div>
                 </article>
               </Reveal>
             ))}

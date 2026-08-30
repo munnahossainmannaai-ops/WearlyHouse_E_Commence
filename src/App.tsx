@@ -4,6 +4,7 @@ import { AnimatePresence, MotionConfig, motion, useScroll, useSpring } from "fra
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import CartDrawer from "./components/CartDrawer";
+import CompareDrawer from "./components/CompareDrawer";
 import CommandPalette from "./components/CommandPalette";
 import { useStore } from "./store/store";
 import { ToastHost, NeonButton } from "./components/ui";
@@ -189,6 +190,7 @@ function Shell() {
       </main>
       {!bare && <Footer />}
       <CartDrawer />
+      <CompareDrawer />
       <ToastHost />
       <CommandPalette />
     </div>

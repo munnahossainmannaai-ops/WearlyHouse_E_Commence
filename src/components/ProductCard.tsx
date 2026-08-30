@@ -5,31 +5,48 @@ import { useStore } from "../store/store";
 import { cx, fmt } from "../lib/utils";
 import { Stars, Tag } from "./ui";
 import SmartImage from "./SmartImage";
-import { IconCart, IconHeart } from "./icons";
+import { IconCart, IconCompare, IconHeart } from "./icons";
 
 export default function ProductCard({ product, layout = "grid", index = 0 }: { product: Product; layout?: "grid" | "list"; index?: number }) {
-  const { wishlist, toggleWishlist, addToCart } = useStore();
+  const { wishlist, toggleWishlist, addToCart, compare, toggleCompare } = useStore();
   const nav = useNavigate();
   const wished = wishlist.includes(product.id);
+  const compared = compare.includes(product.id);
   const out = product.stock === 0;
 
   const heart = (
-    <motion.button
-      whileTap={{ scale: 0.75 }}
-      onClick={(e) => {
-        e.preventDefault();
-        toggleWishlist(product.id);
-      }}
-      aria-label={wished ? "Remove from wishlist" : "Add to wishlist"}
-      className={cx(
-        "absolute top-3 right-3 z-10 w-8 h-8 rounded-full glass flex items-center justify-center transition-colors",
-        wished ? "text-rose2 border-rose2/50" : "text-mist hover:text-rose2"
-      )}
-    >
-      <motion.span animate={wished ? { scale: [1, 1.35, 1] } : {}} transition={{ duration: 0.35 }}>
-        <IconHeart size={15} filled={wished} />
-      </motion.span>
-    </motion.button>
+    <div className="absolute top-3 right-3 z-10 flex flex-col gap-1.5">
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          toggleCompare(product.id);
+        }}
+        aria-label={compared ? "Remove from compare" : "Add to compare"}
+        title="Compare"
+        className={cx(
+          "w-8 h-8 rounded-full glass flex items-center justify-center transition-all",
+          compared ? "text-neon border-neon/60 shadow-[0_0_14px_-4px_rgba(45,226,255,0.6)]" : "text-mist hover:text-neon"
+        )}
+      >
+        <IconCompare size={14} />
+      </button>
+      <motion.button
+        whileTap={{ scale: 0.75 }}
+        onClick={(e) => {
+          e.preventDefault();
+          toggleWishlist(product.id);
+        }}
+        aria-label={wished ? "Remove from wishlist" : "Add to wishlist"}
+        className={cx(
+          "w-8 h-8 rounded-full glass flex items-center justify-center transition-colors",
+          wished ? "text-rose2 border-rose2/50" : "text-mist hover:text-rose2"
+        )}
+      >
+        <motion.span animate={wished ? { scale: [1, 1.35, 1] } : {}} transition={{ duration: 0.35 }}>
+          <IconHeart size={15} filled={wished} />
+        </motion.span>
+      </motion.button>
+    </div>
   );
 
   const quickAdd = (

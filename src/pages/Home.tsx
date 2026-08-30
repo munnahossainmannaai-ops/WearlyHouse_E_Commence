@@ -1,7 +1,8 @@
-import { useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, useScroll, useSpring, useTransform } from "framer-motion";
 import { useStore } from "../store/store";
+import type { Product } from "../lib/types";
 import { CATEGORIES, TESTIMONIALS } from "../data/catalog";
 import { fmt } from "../lib/utils";
 import { Counter, NeonButton, Reveal, SectionHead, Stars, useScramble } from "../components/ui";
@@ -310,6 +311,8 @@ export default function Home() {
         </div>
       </section>
 
+      <FlashDeal products={products} />
+
       {recentlyScanned.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 md:px-6 pt-20">
           <Reveal>
@@ -402,5 +405,111 @@ export default function Home() {
         </Reveal>
       </section>
     </div>
+  );
+}
+
+/* ============ FLASH DEAL ============ */
+function FlashDeal({ products }: { products: Product[] }) {
+  const addToCart = useStore((s) => s.addToCart);
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  const deal = useMemo(() => {
+    const cands = products.filter((p) => p.compareAt && p.stock > 0);
+    return [...cands].sort(
+      (a, b) => (b.compareAt! - b.price) / b.compareAt! - (a.compareAt! - a.price) / a.compareAt!
+    )[0];
+  }, [products]);
+
+  if (!deal) return null;
+
+  const end = new Date();
+  end.setUTCHours(23, 59, 59, 999);
+  const rem = Math.max(0, end.getTime() - now);
+  const seg = (ms: number) => String(Math.floor(rem / ms) % (ms > 1000 ? 60 : 24)).padStart(2, "0");
+  const hh = String(Math.floor(rem / 3_600_000)).padStart(2, "0");
+  const mm = seg(60_000);
+  const ss = seg(1_000);
+  const claimed = Math.min(92, 38 + (deal.ratingCount % 47));
+  const off = Math.round(((deal.compareAt! - deal.price) / deal.compareAt!) * 100);
+
+  return (
+    <section className="max-w-7xl mx-auto px-4 md:px-6 pt-24">
+      <Reveal>
+        <div className="relative glass rounded-3xl overflow-hidden">
+          <div className="absolute inset-0 grid-bg opacity-60" />
+          <div className="absolute -right-28 -bottom-28 w-96 h-96 rounded-full bg-rose2/12 blur-[110px]" />
+          <div className="relative grid md:grid-cols-[1.25fr_1fr] gap-8 p-6 md:p-10 items-center">
+            <div>
+              <p className="font-mono text-[11px] tracking-[0.3em] uppercase text-rose2 flex items-center gap-2.5 mb-4">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose2 anim-pulse-dot" />
+                Flash allocation · drop 07
+              </p>
+              <h2 className="font-display text-3xl md:text-[2.6rem] font-bold text-white leading-[1.05]">
+                {deal.name}
+              </h2>
+              <p className="text-mist mt-3 max-w-md leading-relaxed">{deal.tagline}</p>
+
+              <div className="flex items-center gap-2.5 mt-7">
+                {[{ v: hh, l: "hrs" }, { v: mm, l: "min" }, { v: ss, l: "sec" }].map((s, i) => (
+                  <div key={s.l} className="flex items-center gap-2.5">
+                    <div className="w-16 md:w-20 py-3 rounded-xl bg-white/[0.04] border border-white/10 text-center">
+                      <span className="block font-mono text-2xl md:text-3xl text-white tabular-nums">{s.v}</span>
+                      <span className="block text-[9px] font-mono uppercase tracking-[0.25em] text-mist mt-1">{s.l}</span>
+                    </div>
+                    {i < 2 && <span className="text-mist font-mono text-xl">:</span>}
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-7 max-w-sm">
+                <div className="flex justify-between text-[11px] font-mono mb-2">
+                  <span className="text-mist uppercase tracking-wider">{claimed}% claimed</span>
+                  <span className="text-rose2">{deal.stock} left at this price</span>
+                </div>
+                <div className="h-1.5 bg-white/8 rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    whileInView={{ width: `${claimed}%` }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 1.4, ease: "easeOut" }}
+                    className="h-full rounded-full bg-gradient-to-r from-rose2 to-amber2"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-4 mt-8">
+                <NeonButton onClick={() => addToCart(deal.id, deal.colors[0].name)}>
+                  Claim for {fmt(deal.price)} <IconArrow size={15} />
+                </NeonButton>
+                <Link to={`/product/${deal.slug}`} className="link-underline text-sm text-fog">
+                  Full readout →
+                </Link>
+              </div>
+            </div>
+
+            <Link to={`/product/${deal.slug}`} className="relative group block">
+              <div className="absolute inset-0 bg-gradient-to-tr from-rose2/25 to-viol/25 blur-3xl opacity-60 group-hover:opacity-90 transition-opacity" />
+              <img
+                src={deal.image}
+                alt={deal.name}
+                loading="lazy"
+                className="relative w-full max-w-md mx-auto aspect-square object-cover rounded-2xl border hairline transition-transform duration-700 group-hover:scale-[1.03]"
+              />
+              <span className="absolute top-4 left-4 px-3 py-1.5 rounded-md bg-rose2 text-void font-display font-bold text-sm clip-notch shadow-[0_0_24px_-6px_rgba(255,92,138,0.8)]">
+                −{off}%
+              </span>
+              <span className="absolute bottom-4 right-4 px-3 py-2 rounded-lg bg-void/75 backdrop-blur border hairline">
+                <span className="block font-mono text-lg text-white leading-none">{fmt(deal.price)}</span>
+                <span className="block font-mono text-[11px] text-mist line-through mt-1">{fmt(deal.compareAt!)}</span>
+              </span>
+            </Link>
+          </div>
+        </div>
+      </Reveal>
+    </section>
   );
 }
