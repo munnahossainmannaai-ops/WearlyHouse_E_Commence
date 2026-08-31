@@ -5,6 +5,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import CartDrawer from "./components/CartDrawer";
 import CompareDrawer from "./components/CompareDrawer";
+import ErrorBoundary from "./components/ErrorBoundary";
 import CommandPalette from "./components/CommandPalette";
 import { useStore } from "./store/store";
 import { ToastHost, NeonButton } from "./components/ui";
@@ -161,6 +162,7 @@ function Shell() {
         Skip to content
       </button>
       <Navbar />
+      <ErrorBoundary>
       <main id="main" tabIndex={-1} className="flex-1 outline-none">
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
@@ -188,6 +190,7 @@ function Shell() {
           </motion.div>
         </AnimatePresence>
       </main>
+      </ErrorBoundary>
       {!bare && <Footer />}
       <CartDrawer />
       <CompareDrawer />

@@ -70,6 +70,7 @@ interface Store {
     discount: number;
     last4: string;
     creditsUsed?: number;
+    guestEmail?: string;
   }) => Order;
   setOrderStatus: (orderId: string, status: OrderStatus) => void;
   cancelOrder: (orderId: string) => void;
@@ -426,7 +427,7 @@ export const useStore = create<Store>()(
         get().toast("success", "Restock ping queued", `We'll signal ${e} when ${p?.name ?? "it"} is back.`);
       },
 
-      placeOrder: ({ address, shippingMethod, shippingCost, discount, last4, creditsUsed }) => {
+      placeOrder: ({ address, shippingMethod, shippingCost, discount, last4, creditsUsed, guestEmail }) => {
         const { cart, products, user, creditBalances } = get();
         const items = cart.flatMap((c) => {
           const p = products.find((x) => x.id === c.productId);
@@ -436,11 +437,11 @@ export const useStore = create<Store>()(
         const balance = user ? creditBalances[user.id] ?? 0 : 0;
         const used = user ? Math.max(0, Math.min(creditsUsed ?? 0, balance, Math.max(0, subtotal - discount))) : 0;
         const total = Math.max(0, subtotal - discount - used) + shippingCost;
-        const earned = Math.max(1, Math.round(total * 0.05));
+        const earned = user ? Math.max(1, Math.round(total * 0.05)) : 0;
         const order: Order = {
           id: `WH-${Date.now().toString(36).toUpperCase()}`,
           userId: user?.id ?? "guest",
-          userEmail: user?.email ?? "guest",
+          userEmail: user?.email ?? guestEmail ?? "guest",
           items,
           address,
           shippingMethod,
@@ -453,7 +454,7 @@ export const useStore = create<Store>()(
           timeline: [{ status: "placed", at: Date.now(), note: "Order received — payment authorized" }],
           createdAt: Date.now(),
           creditsUsed: used || undefined,
-          creditsEarned: earned,
+          creditsEarned: earned || undefined,
         };
         set((s) => ({
           orders: [order, ...s.orders],

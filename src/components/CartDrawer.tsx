@@ -32,6 +32,9 @@ export default function CartDrawer() {
             exit={{ x: "105%" }}
             transition={{ type: "spring", damping: 32, stiffness: 300 }}
             className="absolute right-0 top-0 bottom-0 w-full max-w-md glass border-l hairline flex flex-col"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Cargo hold — shopping cart"
           >
             <div className="flex items-center justify-between px-6 h-16 border-b hairline shrink-0">
               <h2 className="font-display font-bold text-white tracking-wide flex items-center gap-2.5">

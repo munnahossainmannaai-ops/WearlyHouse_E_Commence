@@ -36,7 +36,10 @@ Seed promo codes: `NEON10` (−10%), `WEARLY25` (−25%). Deploy your own from *
   driven by the admin-configurable threshold
 - **Wishlist** (`/wishlist`) — pinned units, bulk load-to-cart
 - **Checkout** (`/checkout`) — 3-step flow (address → shipping lane → Stripe-style card form with
-  input masking), promo redemption tracking, order confirmation with flight-plan timeline
+  input masking), **guest checkout** (email receipt, no account needed), credit redemption,
+  promo redemption tracking, order confirmation with flight-plan timeline
+- **Platform shell** — installable PWA (manifest + offline service worker), error boundary with
+  recovery, lazy-loaded routes, per-route titles, skip-link + dialog/focus a11y
 - **Order tracking** (`/track`) — guest lookup by order ID + email, animated status pipeline
 - **Account** (`/account`) — order history with expandable tracking timelines, reorder button,
   profile + password management, address CRUD
@@ -159,6 +162,31 @@ toggling adds a 520ms color-only crossfade. **Adding a third theme = one new `[d
 | `login/signup/quickLogin` | NextAuth.js (credentials + Google provider)            |
 | Simulated card form       | Stripe PaymentIntents (`last4` from `payment_method`)  |
 | `views` / `auditLog`      | Analytics collection + server-side audit middleware    |
+
+### API contract (for the real backend)
+
+Every Zustand action below maps to one route. Request/response bodies are the
+`lib/types.ts` interfaces, so the frontend can swap transports without reshaping data.
+
+| Method & route                        | Store action            | Auth        |
+| ------------------------------------- | ----------------------- | ----------- |
+| `GET  /api/products?cat=&q=&sort=`    | product selectors       | public      |
+| `GET  /api/products/:slug`            | `recordView` (→ `POST /api/products/:id/views`) | public |
+| `POST /api/cart/validate`             | stock guard in `addToCart` | public   |
+| `POST /api/auth/signup` · `POST /api/auth/login` | `signup` / `login` | public |
+| `POST /api/orders`                    | `placeOrder`            | user/guest  |
+| `GET  /api/orders?user=` · `GET /api/orders/:id` | order selectors / Track page | owner |
+| `POST /api/orders/:id/cancel`         | `cancelOrder`           | owner       |
+| `PATCH /api/admin/orders/:id/status`  | `setOrderStatus`        | **admin (server-enforced)** |
+| `POST/PUT/DELETE /api/admin/products` | `upsertProduct` / `deleteProduct` | admin |
+| `PATCH /api/admin/products/:id/stock` | `setStock`              | admin       |
+| `GET/PATCH /api/admin/settings`       | thresholds / `promos` CRUD | admin    |
+| `GET  /api/admin/reports/overview`    | KPI + chart derivations | admin       |
+| `POST /api/webhooks/stripe`           | mark paid / `creditsEarned` ledger | signing secret |
+
+Rules to enforce **server-side** (never trust the client): price totals, promo
+validity (`promos` collection), stock decrements, admin role on every `/api/admin/*`
+route, and credit accrual only from the Stripe webhook — not from the order payload.
 
 ---
 

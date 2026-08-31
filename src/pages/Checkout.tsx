@@ -6,7 +6,7 @@ import type { Address, Order } from "../lib/types";
 import { SHIPPING_METHODS } from "../data/catalog";
 import { cx, fmt, uid } from "../lib/utils";
 import { Field, inputCls, NeonButton } from "../components/ui";
-import { IconArrow, IconBolt, IconCard, IconCheck, IconChevron, IconPin, IconStripe, IconTruck } from "../components/icons";
+import { IconArrow, IconBolt, IconCard, IconCheck, IconChevron, IconPin, IconStripe, IconTruck, IconUser } from "../components/icons";
 
 const STEPS = ["Address", "Shipping", "Payment"];
 
@@ -28,6 +28,7 @@ export default function Checkout() {
   const [promo, setPromo] = useState("");
   const [discount, setDiscount] = useState(0);
   const [useCredits, setUseCredits] = useState(true);
+  const [guestEmail, setGuestEmail] = useState("");
 
   const subtotal = cartSubtotal(cart, products);
   const method = SHIPPING_METHODS.find((m) => m.id === shipId)!;
@@ -37,17 +38,17 @@ export default function Checkout() {
   const payable = Math.max(0, subtotal - discount);
   const used = useCredits ? Math.min(balance, payable) : 0;
   const total = Math.max(0, payable - used) + shipCost;
-  const earn = Math.max(1, Math.round(total * 0.05));
+  const earn = user ? Math.max(1, Math.round(total * 0.05)) : 0;
 
   useEffect(() => {
     window.scrollTo({ top: 0 });
   }, [step]);
 
-  if (!user) return <Navigate to="/auth?next=/checkout" replace />;
   if (cart.length === 0 && !done) return <Navigate to="/shop" replace />;
 
   const validateAddress = () => {
     const e: Record<string, string> = {};
+    if (!user && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)) e.guestEmail = "Valid email required for the receipt";
     if (addr.fullName.trim().length < 2) e.fullName = "Recipient required";
     if (addr.line1.trim().length < 4) e.line1 = "Street address required";
     if (!addr.city.trim()) e.city = "City required";
@@ -80,7 +81,7 @@ export default function Checkout() {
     setPaying(true);
     setTimeout(() => {
       const address: Address = { id: uid(), label: addrLabel, ...addr };
-      if (saveIt) saveAddress({ label: addrLabel, ...addr });
+      if (user && saveIt) saveAddress({ label: addrLabel, ...addr });
       const order = placeOrder({
         address,
         shippingMethod: method.name,
@@ -88,6 +89,7 @@ export default function Checkout() {
         discount,
         last4: card.number.replace(/\s/g, "").slice(-4),
         creditsUsed: used,
+        guestEmail: user ? undefined : guestEmail.trim(),
       });
       setDone(order);
       setPaying(false);
@@ -123,7 +125,7 @@ export default function Checkout() {
             ))}
           </div>
           <div className="flex flex-wrap gap-3 mt-7">
-            <NeonButton onClick={() => nav("/account")} className="flex-1">Track order <IconArrow size={15} /></NeonButton>
+            <NeonButton onClick={() => nav(user ? "/account" : `/track?id=${done.id}`)} className="flex-1">Track order <IconArrow size={15} /></NeonButton>
             <NeonButton variant="ghost" onClick={() => nav("/shop")} className="flex-1">Keep scanning</NeonButton>
           </div>
         </motion.div>
@@ -171,7 +173,22 @@ export default function Checkout() {
             >
               {step === 0 && (
                 <div className="space-y-5">
-                  {user.addresses.length > 0 && (
+                  {!user && (
+                    <div className="glass rounded-xl p-5 border-neon/30 flex flex-wrap items-center gap-4">
+                      <div className="flex-1 min-w-[220px]">
+                        <p className="text-sm text-white font-medium flex items-center gap-2">
+                          <IconUser size={15} className="text-neon" /> Checking out as guest
+                        </p>
+                        <p className="text-xs text-mist mt-1 leading-relaxed">
+                          Sign in to earn credits, save drop points and track this order from your dashboard. Guests can still track via the manifest ID.
+                        </p>
+                      </div>
+                      <Link to="/auth?next=/checkout" className="shrink-0">
+                        <NeonButton variant="violet">Sign in instead</NeonButton>
+                      </Link>
+                    </div>
+                  )}
+                  {user && user.addresses.length > 0 && (
                     <div>
                       <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-mist mb-3">Saved drop points</p>
                       <div className="grid sm:grid-cols-2 gap-3">
@@ -195,6 +212,13 @@ export default function Checkout() {
 
                   <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-mist">Delivery coordinates</p>
                   <div className="grid sm:grid-cols-2 gap-4">
+                    {!user && (
+                      <div className="sm:col-span-2">
+                        <Field label="Email for receipt & tracking" error={errors.guestEmail}>
+                          <input value={guestEmail} onChange={(e) => setGuestEmail(e.target.value)} className={inputCls(errors.guestEmail)} placeholder="you@station.io" type="email" />
+                        </Field>
+                      </div>
+                    )}
                     <Field label="Recipient" error={errors.fullName}>
                       <input value={addr.fullName} onChange={(e) => setAddr({ ...addr, fullName: e.target.value })} className={inputCls(errors.fullName)} placeholder="Kai Demo" />
                     </Field>
@@ -230,7 +254,7 @@ export default function Checkout() {
                       </Field>
                     </div>
                   </div>
-                  <label className="flex items-center gap-2.5 text-sm text-mist cursor-pointer select-none">
+                  {user && <label className="flex items-center gap-2.5 text-sm text-mist cursor-pointer select-none">
                     <button
                       onClick={() => setSaveIt(!saveIt)}
                       className={cx("w-5 h-5 rounded border flex items-center justify-center transition-all", saveIt ? "bg-gradient-to-r from-neon to-viol border-transparent text-void" : "border-white/20")}
@@ -239,7 +263,7 @@ export default function Checkout() {
                       {saveIt && <IconCheck size={12} />}
                     </button>
                     Save this drop point to my account
-                  </label>
+                  </label>}
                 </div>
               )}
 
@@ -385,9 +409,11 @@ export default function Checkout() {
                       </button>
                     </div>
                   )}
-                  <p className="text-[11px] font-mono text-mist/70 flex items-center gap-1.5">
-                    <IconBolt size={12} className="text-viol" /> This order earns <span className="text-viol">{earn} credits</span> (5% of total).
-                  </p>
+                  {earn > 0 && (
+                    <p className="text-[11px] font-mono text-mist/70 flex items-center gap-1.5">
+                      <IconBolt size={12} className="text-viol" /> This order earns <span className="text-viol">{earn} credits</span> (5% of total).
+                    </p>
+                  )}
                 </div>
               )}
             </motion.div>
@@ -448,7 +474,7 @@ export default function Checkout() {
               <span className="text-white font-semibold">Total</span>
               <span className="font-mono text-xl text-neon">{fmt(total)}</span>
             </div>
-            <p className="text-[10px] font-mono text-viol/80 pt-1">+{earn} credits after this order</p>
+            {earn > 0 && <p className="text-[10px] font-mono text-viol/80 pt-1">+{earn} credits after this order</p>}
           </div>
         </aside>
       </div>
