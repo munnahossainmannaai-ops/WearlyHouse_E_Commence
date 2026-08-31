@@ -5,7 +5,7 @@ import { useStore } from "../store/store";
 import type { Order } from "../lib/types";
 import { cx, fmt, dateFmt, STATUS_META, ORDER_FLOW } from "../lib/utils";
 import { Field, inputCls, Modal, NeonButton, Tag } from "../components/ui";
-import { IconBox, IconCard, IconCheck, IconChevron, IconPin, IconPlus, IconTrash, IconUser, IconEdit } from "../components/icons";
+import { IconBolt, IconBox, IconCard, IconCheck, IconChevron, IconPin, IconPlus, IconTrash, IconUser, IconEdit } from "../components/icons";
 
 const TABS = [
   { id: "orders", label: "Orders", icon: <IconBox size={15} /> },
@@ -42,7 +42,7 @@ function TrackingTimeline({ order }: { order: Order }) {
 }
 
 export default function Account() {
-  const { user, orders, updateProfile, changePassword, saveAddress, deleteAddress, reorder, cancelOrder } = useStore();
+  const { user, orders, updateProfile, changePassword, saveAddress, deleteAddress, reorder, cancelOrder, creditBalances } = useStore();
   const toast = useStore((s) => s.toast);
   const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("orders");
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -60,6 +60,7 @@ export default function Account() {
   if (!user) return <Navigate to="/auth?next=/account" replace />;
 
   const myOrders = orders.filter((o) => o.userId === user.id);
+  const credits = creditBalances[user.id] ?? 0;
 
   const saveProfile = () => {
     if (name.trim().length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -116,6 +117,13 @@ export default function Account() {
             <h1 className="font-display text-3xl font-bold text-white">{user.name}</h1>
             <p className="text-xs text-mist font-mono mt-1">Joined {dateFmt(user.createdAt)} · {user.email}</p>
           </div>
+          <div className="text-right">
+            <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-mist">Credits</p>
+            <p className="font-mono text-2xl text-viol flex items-center gap-1.5 justify-end">
+              <IconBolt size={16} className="text-viol" /> {credits}
+            </p>
+            <p className="text-[10px] text-mist/70 font-mono">= {fmt(credits)} at checkout</p>
+          </div>
           <Tag tone={user.role === "admin" ? "viol" : "mint"}>{user.role === "admin" ? "ADMIN CLEARANCE" : "CIVILIAN"}</Tag>
         </div>
       </div>
@@ -161,7 +169,15 @@ export default function Account() {
                         ))}
                       </div>
                       <div className="flex-1 min-w-[160px]">
-                        <p className="font-mono text-sm text-white">{o.id}</p>
+                        <p className="font-mono text-sm text-white flex items-center gap-2">
+                          {o.id}
+                          {o.creditsEarned ? (
+                            <span className="text-[10px] font-mono text-viol">+{o.creditsEarned}cr</span>
+                          ) : null}
+                          {o.creditsUsed ? (
+                            <span className="text-[10px] font-mono text-mint">−{o.creditsUsed}cr</span>
+                          ) : null}
+                        </p>
                         <p className="text-[11px] text-mist font-mono mt-0.5">{dateFmt(o.createdAt)} · {o.items.reduce((a, i) => a + i.qty, 0)} units · {o.shippingMethod}</p>
                       </div>
                       <span className={cx("px-3 py-1 rounded-full text-[11px] font-mono border flex items-center gap-1.5", meta.tone)}>

@@ -6,12 +6,12 @@ import type { Address, Order } from "../lib/types";
 import { SHIPPING_METHODS } from "../data/catalog";
 import { cx, fmt, uid } from "../lib/utils";
 import { Field, inputCls, NeonButton } from "../components/ui";
-import { IconArrow, IconCard, IconCheck, IconChevron, IconPin, IconStripe, IconTruck } from "../components/icons";
+import { IconArrow, IconBolt, IconCard, IconCheck, IconChevron, IconPin, IconStripe, IconTruck } from "../components/icons";
 
 const STEPS = ["Address", "Shipping", "Payment"];
 
 export default function Checkout() {
-  const { cart, products, user, placeOrder, saveAddress, promos, freeShipThreshold, redeemPromo } = useStore();
+  const { cart, products, user, placeOrder, saveAddress, promos, freeShipThreshold, redeemPromo, creditBalances } = useStore();
   const toast = useStore((s) => s.toast);
   const activePromos = promos.filter((p) => p.active);
   const nav = useNavigate();
@@ -27,10 +27,17 @@ export default function Checkout() {
   const [paying, setPaying] = useState(false);
   const [promo, setPromo] = useState("");
   const [discount, setDiscount] = useState(0);
+  const [useCredits, setUseCredits] = useState(true);
 
   const subtotal = cartSubtotal(cart, products);
   const method = SHIPPING_METHODS.find((m) => m.id === shipId)!;
   const shipCost = subtotal >= freeShipThreshold && method.cost > 0 ? 0 : method.cost;
+
+  const balance = user ? creditBalances[user.id] ?? 0 : 0;
+  const payable = Math.max(0, subtotal - discount);
+  const used = useCredits ? Math.min(balance, payable) : 0;
+  const total = Math.max(0, payable - used) + shipCost;
+  const earn = Math.max(1, Math.round(total * 0.05));
 
   useEffect(() => {
     window.scrollTo({ top: 0 });
@@ -80,6 +87,7 @@ export default function Checkout() {
         shippingCost: shipCost,
         discount,
         last4: card.number.replace(/\s/g, "").slice(-4),
+        creditsUsed: used,
       });
       setDone(order);
       setPaying(false);
@@ -349,6 +357,37 @@ export default function Checkout() {
                     </Field>
                     {discount > 0 && <p className="text-mint text-xs mt-1.5">-{fmt(discount)} locked in.</p>}
                   </div>
+
+                  {balance > 0 && (
+                    <div className="glass rounded-xl p-4 flex items-center justify-between gap-3 border-viol/30">
+                      <div>
+                        <p className="text-sm text-white font-medium flex items-center gap-2">
+                          <IconBolt size={14} className="text-viol" /> Redeem credits
+                        </p>
+                        <p className="text-[11px] font-mono text-mist mt-1">
+                          {balance} credits available · applies {fmt(used)} to this order
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setUseCredits(!useCredits)}
+                        aria-label="Toggle credit redemption"
+                        className={cx(
+                          "relative w-11 h-6 rounded-full transition-colors duration-300 shrink-0",
+                          useCredits ? "bg-gradient-to-r from-neon to-viol" : "bg-white/10"
+                        )}
+                      >
+                        <span
+                          className={cx(
+                            "absolute top-0.5 w-5 h-5 rounded-full bg-void transition-all duration-300",
+                            useCredits ? "left-[22px]" : "left-0.5"
+                          )}
+                        />
+                      </button>
+                    </div>
+                  )}
+                  <p className="text-[11px] font-mono text-mist/70 flex items-center gap-1.5">
+                    <IconBolt size={12} className="text-viol" /> This order earns <span className="text-viol">{earn} credits</span> (5% of total).
+                  </p>
                 </div>
               )}
             </motion.div>
@@ -372,7 +411,7 @@ export default function Checkout() {
                     Authorizing…
                   </>
                 ) : (
-                  <>Pay {fmt(Math.max(0, subtotal - discount) + shipCost)}</>
+                  <>Pay {fmt(total)}</>
                 )}
               </NeonButton>
             )}
@@ -404,10 +443,12 @@ export default function Checkout() {
             <div className="flex justify-between"><span className="text-mist">Units</span><span className="font-mono text-fog">{fmt(subtotal)}</span></div>
             <div className="flex justify-between"><span className="text-mist">Freight · {method.name.split(" ")[0]}</span><span className={cx("font-mono", shipCost === 0 ? "text-mint" : "text-fog")}>{shipCost === 0 ? "FREE" : fmt(shipCost)}</span></div>
             {discount > 0 && <div className="flex justify-between text-mint"><span>Discount</span><span className="font-mono">-{fmt(discount)}</span></div>}
+            {used > 0 && <div className="flex justify-between text-viol"><span>Credits ({used})</span><span className="font-mono">-{fmt(used)}</span></div>}
             <div className="border-t hairline pt-3 flex justify-between items-baseline">
               <span className="text-white font-semibold">Total</span>
-              <span className="font-mono text-xl text-neon">{fmt(Math.max(0, subtotal - discount) + shipCost)}</span>
+              <span className="font-mono text-xl text-neon">{fmt(total)}</span>
             </div>
+            <p className="text-[10px] font-mono text-viol/80 pt-1">+{earn} credits after this order</p>
           </div>
         </aside>
       </div>

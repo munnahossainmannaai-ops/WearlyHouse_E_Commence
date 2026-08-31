@@ -53,3 +53,29 @@ export const seededSeries = (seed: number, n: number, base: number, amp: number)
 };
 
 export const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
+
+/**
+ * Lenient subsequence match for typo-tolerant search.
+ * Scores higher on consecutive runs and early matches; returns null for no match.
+ */
+export const fuzzyScore = (query: string, target: string): number | null => {
+  const q = query.trim().toLowerCase();
+  const t = target.toLowerCase();
+  if (!q) return 0;
+  if (t.includes(q)) return 100 + (t.length - q.length) * -0.5 + (q.length * 4);
+  let ti = 0;
+  let score = 0;
+  let streak = 0;
+  for (const ch of q) {
+    if (ch === " ") continue;
+    const idx = t.indexOf(ch, ti);
+    if (idx === -1) return null;
+    streak = idx === ti ? streak + 1 : 1;
+    score += 10 + streak * 2 - Math.min(idx, 40) * 0.15;
+    ti = idx + 1;
+  }
+  return score;
+};
+
+export const fuzzyMatch = (query: string, target: string): boolean =>
+  fuzzyScore(query, target) !== null;
