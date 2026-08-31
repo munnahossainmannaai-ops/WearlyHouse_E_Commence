@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useStore } from "../store/store";
 import { CATEGORIES } from "../data/catalog";
-import { cx, fmt } from "../lib/utils";
+import { cx, fmt, fuzzyMatch } from "../lib/utils";
 import ProductCard from "../components/ProductCard";
 import { Reveal } from "../components/ui";
 import { IconClose, IconGrid, IconRows, IconSearch, IconChevron, IconAlert } from "../components/icons";
@@ -42,7 +42,7 @@ export default function Catalog() {
   const filtered = useMemo(() => {
     let list = products.filter((p) => {
       if (cat !== "all" && p.category !== cat) return false;
-      if (q && !(p.name + " " + p.tagline + " " + p.category + " " + p.tags.join(" ")).toLowerCase().includes(q.toLowerCase())) return false;
+      if (q && !fuzzyMatch(q, p.name + " " + p.tagline + " " + p.category + " " + p.tags.join(" "))) return false;
       if (p.price < price[0] || p.price > price[1]) return false;
       if (inStockOnly && p.stock === 0) return false;
       if (saleOnly && !p.compareAt) return false;

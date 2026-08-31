@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { cartCount, useStore } from "../store/store";
-import { cx, fmt } from "../lib/utils";
+import { cx, fmt, fuzzyScore } from "../lib/utils";
 import { CATEGORIES } from "../data/catalog";
 import {
   IconCart, IconChevron, IconClose, IconHeart, IconLogo, IconMenu, IconSearch, IconUser, IconLogout, IconGrid, IconBolt,
@@ -43,11 +43,14 @@ export default function Navbar() {
   }, [loc.pathname, loc.search]);
 
   const suggestions = useMemo(() => {
-    const t = q.trim().toLowerCase();
+    const t = q.trim();
     if (!t) return [];
     return products
-      .filter((p) => (p.name + " " + p.category + " " + p.tags.join(" ")).toLowerCase().includes(t))
-      .slice(0, 5);
+      .map((p) => ({ p, score: fuzzyScore(t, p.name + " " + p.category + " " + p.tags.join(" ")) }))
+      .filter((x) => x.score !== null)
+      .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
+      .slice(0, 5)
+      .map((x) => x.p);
   }, [q, products]);
 
   const count = cartCount(cart);

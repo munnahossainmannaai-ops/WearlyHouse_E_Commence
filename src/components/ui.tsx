@@ -279,6 +279,8 @@ export const Modal = ({
           exit={{ opacity: 0, scale: 0.96, y: 12 }}
           transition={{ type: "spring", damping: 26, stiffness: 320 }}
           className={cx("relative glass rounded-xl w-full max-h-[88vh] overflow-y-auto p-6 md:p-8", wide ? "max-w-3xl" : "max-w-md")}
+          role="dialog"
+          aria-modal="true"
         >
           <button
             onClick={onClose}
@@ -309,7 +311,7 @@ export const ToastHost = () => {
     info: "text-neon border-neon/40 shadow-[0_0_24px_-8px_rgba(45,226,255,0.5)]",
   };
   return (
-    <div className="fixed top-20 right-4 z-[100] flex flex-col gap-2 w-[min(92vw,340px)]">
+    <div className="fixed top-20 right-4 z-[100] flex flex-col gap-2 w-[min(92vw,340px)]" aria-live="polite" role="status">
       <AnimatePresence>
         {toasts.map((t) => (
           <motion.button
