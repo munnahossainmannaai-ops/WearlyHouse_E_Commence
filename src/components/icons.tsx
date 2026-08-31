@@ -271,6 +271,21 @@ export const IconGoogle = (p: P) => (
   </svg>
 );
 
+export const IconBell = (p: P & { filled?: boolean }) => (
+  <svg {...base(p)} fill={p.filled ? "currentColor" : "none"}>
+    <path d="M12 4a5.5 5.5 0 0 0-5.5 5.5c0 4-1.5 5.5-1.5 5.5h14s-1.5-1.5-1.5-5.5A5.5 5.5 0 0 0 12 4z" />
+    <path d="M10 18.5a2 2 0 0 0 4 0" />
+  </svg>
+);
+
+export const IconPrint = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M7 8V3.5h10V8" />
+    <rect x="4" y="8" width="16" height="8.5" rx="1.8" />
+    <path d="M7 14.5h10v6H7z" />
+  </svg>
+);
+
 export const IconStripe = (p: P) => (
   <svg {...base(p)} stroke="none" fill="currentColor">
     <path d="M13.4 5.5c-1.3 0-2.2.7-2.2 1.6 0 1.2 1.4 1.6 2.9 2.1 2 .7 4.4 1.5 4.4 4.5 0 2.8-2.2 4.5-5.3 4.5-1.5 0-3-.3-4.2-1l.6-3.1c1 .6 2.3 1 3.5 1 1.2 0 2.4-.4 2.4-1.5 0-1.3-1.6-1.8-3.2-2.3-1.9-.6-3.9-1.4-3.9-4.3 0-2.7 2.1-4.3 5-4.3 1.3 0 2.6.3 3.6.8l-.6 3c-.9-.5-2-.8-3-.8z" />

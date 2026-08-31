@@ -106,6 +106,18 @@ export interface Toast {
   message?: string;
 }
 
+export interface AppNotification {
+  id: string;
+  at: number;
+  kind: "shipped" | "delivered" | "restock" | "system";
+  title: string;
+  body: string;
+  orderId?: string;
+  read: boolean;
+}
+
+export type OpsSpeed = "demo" | "real";
+
 export type Category = {
   id: string;
   name: string;
